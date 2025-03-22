@@ -70,12 +70,16 @@ void scanLiteral(std::string_view code, int &pos, std::string_view &out) {
 }
 
 struct CaseInsensCompare {
-  bool operator()(const std::string &a, const std::string &b) {
-    return strcasecmp(a.c_str(), b.c_str()) < 0;
+  bool operator()(const std::string_view &a, const std::string_view &b) const {
+    // Compare functions in cpp assume true means a<b. Elements are considered
+    // equal if !(a<b) && !(b<a)
+    if (a.size() != b.size()) {
+      return true;
+    }
+    return strncasecmp(a.data(), b.data(), a.size()) < 0;
   }
 };
-const std::map<std::string_view, TokenType> g_keywords{
-    // TODO: Add CaseInsensitiveCompare
+const std::map<std::string_view, TokenType, CaseInsensCompare> g_keywords{
     {"and", TokenType::AND},       {"class", TokenType::CLASS},
     {"else", TokenType::ELSE},     {"false", TokenType::FALSE},
     {"fun", TokenType::FUN},       {"for", TokenType::FOR},
@@ -184,7 +188,7 @@ std::vector<Token> scanTokens(const std::string_view code,
     } else if (isalpha(c) || c == '_') {
       std::string_view literal;
       scanLiteral(code, pos, literal);
-      if (g_keywords.find(literal) != g_keywords.end()) {
+      if (g_keywords.contains(literal)) {
         tokens.emplace_back(g_keywords.at(literal), literal, line);
       } else {
         tokens.emplace_back(TokenType::IDENTIFIER, literal, line);
