@@ -51,6 +51,7 @@ TEST(Scanner, Addition) {
 }
 
 TEST(Scanner, NoSpaces) {
+  // Given
   std::vector<SyntaxError> errors;
   std::string code = "var B=1";
   std::vector<Token> expected{
