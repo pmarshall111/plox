@@ -8,6 +8,7 @@ namespace plox {
 namespace treewalk {
 
 namespace {
+// All scanXXX methods are to leave pos at the last char of the token
 std::optional<SyntaxError> scanNumber(std::string_view code, int &pos,
                                       std::string_view &out, int line) {
   int numDots = 0;
@@ -35,6 +36,7 @@ std::optional<SyntaxError> scanNumber(std::string_view code, int &pos,
 
   int size = pos - start;
   out = std::string_view(&code.at(start), size);
+  pos--; // Reset pos to the last char of the number
   return std::nullopt;
 }
 
@@ -67,6 +69,7 @@ void scanLiteral(std::string_view code, int &pos, std::string_view &out) {
 
   int size = pos - start;
   out = std::string_view(&code.at(start), size);
+  pos--; // Reset pos to the last char of the literal
 }
 
 struct CaseInsensCompare {
@@ -93,9 +96,6 @@ bool nextCharEquals(std::string_view code, int pos, char c) {
   return pos + 1 < code.size() && code.at(pos + 1) == c;
 }
 } // namespace
-
-SyntaxError::SyntaxError(const std::string &msg, int line)
-    : d_msg(msg), d_line(line){};
 
 Token::Token(TokenType type, std::string_view val, int line)
     : d_type(type), d_val(val), d_line(line) {}
@@ -218,6 +218,13 @@ int Token::getLine() const { return d_line; }
 std::ostream &operator<<(std::ostream &os, const Token &tok) {
   os << tokenutils::tokenTypeToStr(tok.getType()) << ":" << tok.getVal() << ":"
      << tok.getLine();
+  return os;
+}
+
+// TODO: Centralise SyntaxError, ParseError to their own file. Get rid of
+// exceptions and use that instead.
+std::ostream &operator<<(std::ostream &os, const SyntaxError &err) {
+  os << "Line: " << err.d_line << ". Message: " << err.d_msg;
   return os;
 }
 

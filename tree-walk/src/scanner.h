@@ -74,14 +74,12 @@ private:
 
 std::ostream &operator<<(std::ostream &os, const Token &tok);
 
-class SyntaxError {
-public:
-  SyntaxError(const std::string &msg, int line);
-
-private:
+struct SyntaxError {
   std::string d_msg;
   int d_line;
 };
+
+std::ostream &operator<<(std::ostream &os, const SyntaxError &err);
 
 std::vector<Token> scanTokens(const std::string_view code,
                               std::vector<SyntaxError> &errors);
