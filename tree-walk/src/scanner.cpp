@@ -8,7 +8,7 @@ namespace plox {
 namespace treewalk {
 
 namespace {
-// All scanXXX methods are to leave pos at the last char of the token
+// All scanXXX() methods are to leave pos at the last char of the token
 std::optional<SyntaxError> scanNumber(std::string_view code, int &pos,
                                       std::string_view &out, int line) {
   int numDots = 0;
@@ -218,13 +218,6 @@ int Token::getLine() const { return d_line; }
 std::ostream &operator<<(std::ostream &os, const Token &tok) {
   os << tokenutils::tokenTypeToStr(tok.getType()) << ":" << tok.getVal() << ":"
      << tok.getLine();
-  return os;
-}
-
-// TODO: Centralise SyntaxError, ParseError to their own file. Get rid of
-// exceptions and use that instead.
-std::ostream &operator<<(std::ostream &os, const SyntaxError &err) {
-  os << "Line: " << err.d_line << ". Message: " << err.d_msg;
   return os;
 }
 

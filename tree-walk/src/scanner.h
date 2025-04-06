@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include <errs.h>
+
 namespace plox {
 namespace treewalk {
 
@@ -73,13 +75,6 @@ private:
 };
 
 std::ostream &operator<<(std::ostream &os, const Token &tok);
-
-struct SyntaxError {
-  std::string d_msg;
-  int d_line;
-};
-
-std::ostream &operator<<(std::ostream &os, const SyntaxError &err);
 
 std::vector<Token> scanTokens(const std::string_view code,
                               std::vector<SyntaxError> &errors);

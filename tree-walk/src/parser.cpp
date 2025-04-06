@@ -133,10 +133,5 @@ std::unique_ptr<ast::Expr> parse(const std::vector<Token> &tokens,
   return expression(tokens, pos, errs);
 }
 
-std::ostream &operator<<(std::ostream &os, const ParseError &err) {
-  os << "Message: " << err.d_message;
-  return os;
-}
-
 } // namespace treewalk
 } // namespace plox
