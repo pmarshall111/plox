@@ -37,6 +37,7 @@ struct Grouping {
 
 struct Literal {
   std::string_view value;
+  TokenType type;
 };
 
 struct Unary {

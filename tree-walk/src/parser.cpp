@@ -27,8 +27,11 @@ std::unique_ptr<ast::Expr> primary(const std::vector<Token> &tokens, int &pos,
   case TokenType::STRING:
   case TokenType::TRUE:
   case TokenType::FALSE:
-  case TokenType::NUL:
-    return std::make_unique<ast::Expr>(ast::Literal{tokens[pos++].getVal()});
+  case TokenType::NUL: {
+    TokenType type = tokens[pos].getType();
+    return std::make_unique<ast::Expr>(
+        ast::Literal{tokens[pos++].getVal(), type});
+  }
   case TokenType::LEFT_PAREN: {
     auto grp = std::make_unique<ast::Expr>(
         ast::Grouping{expression(tokens, ++pos, errs)});

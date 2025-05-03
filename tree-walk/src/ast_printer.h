@@ -3,8 +3,6 @@
 
 #include <ast.h>
 
-#include <memory>
-#include <sstream>
 #include <string>
 
 namespace plox {
