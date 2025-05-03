@@ -10,7 +10,7 @@ std::string addParens(const std::string &str) { return "(" + str + ")"; }
 
 std::string PrinterVisitor::operator()(const Binary &bin) {
   std::ostringstream ss;
-  ss << std::visit(*this, *bin.left) << bin.op.getVal()
+  ss << std::visit(*this, *bin.left) << bin.op.value
      << std::visit(*this, *bin.right);
   return addParens(ss.str());
 }
@@ -27,7 +27,7 @@ std::string PrinterVisitor::operator()(const Literal &ltrl) {
 
 std::string PrinterVisitor::operator()(const Unary &unary) {
   std::ostringstream ss;
-  ss << unary.op.getVal() << std::visit(*this, *unary.right);
+  ss << unary.op.value << std::visit(*this, *unary.right);
   return addParens(ss.str());
 }
 

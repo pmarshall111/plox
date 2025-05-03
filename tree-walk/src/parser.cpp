@@ -22,20 +22,19 @@ std::unique_ptr<ast::Expr> expression(const std::vector<Token> &tokens,
 
 std::unique_ptr<ast::Expr> primary(const std::vector<Token> &tokens, int &pos,
                                    std::vector<ParseError> &errs) {
-  switch (tokens[pos].getType()) {
+  switch (tokens[pos].type) {
   case TokenType::NUMBER:
   case TokenType::STRING:
   case TokenType::TRUE:
   case TokenType::FALSE:
   case TokenType::NUL: {
-    TokenType type = tokens[pos].getType();
-    return std::make_unique<ast::Expr>(
-        ast::Literal{tokens[pos++].getVal(), type});
+    TokenType type = tokens[pos].type;
+    return std::make_unique<ast::Expr>(ast::Literal{tokens[pos++].value, type});
   }
   case TokenType::LEFT_PAREN: {
     auto grp = std::make_unique<ast::Expr>(
         ast::Grouping{expression(tokens, ++pos, errs)});
-    if (tokens[pos++].getType() == TokenType::RIGHT_PAREN) {
+    if (tokens[pos++].type == TokenType::RIGHT_PAREN) {
       return grp;
     }
     errs.push_back({"No closing paren found!"});
@@ -49,7 +48,7 @@ std::unique_ptr<ast::Expr> primary(const std::vector<Token> &tokens, int &pos,
 
 std::unique_ptr<ast::Expr> unary(const std::vector<Token> &tokens, int &pos,
                                  std::vector<ParseError> &errs) {
-  switch (tokens[pos].getType()) {
+  switch (tokens[pos].type) {
   case TokenType::BANG:
   case TokenType::MINUS: {
     const Token &tok = tokens[pos];
@@ -64,7 +63,7 @@ std::unique_ptr<ast::Expr> unary(const std::vector<Token> &tokens, int &pos,
 std::unique_ptr<ast::Expr> factor(const std::vector<Token> &tokens, int &pos,
                                   std::vector<ParseError> &errs) {
   std::unique_ptr<ast::Expr> leftOp = unary(tokens, pos, errs);
-  switch (tokens[pos].getType()) {
+  switch (tokens[pos].type) {
   case TokenType::STAR:
   case TokenType::SLASH: {
     const Token &tok = tokens[pos];
@@ -79,7 +78,7 @@ std::unique_ptr<ast::Expr> factor(const std::vector<Token> &tokens, int &pos,
 std::unique_ptr<ast::Expr> term(const std::vector<Token> &tokens, int &pos,
                                 std::vector<ParseError> &errs) {
   std::unique_ptr<ast::Expr> leftOp = factor(tokens, pos, errs);
-  switch (tokens[pos].getType()) {
+  switch (tokens[pos].type) {
   case TokenType::PLUS:
   case TokenType::MINUS: {
     const Token &tok = tokens[pos];
@@ -94,7 +93,7 @@ std::unique_ptr<ast::Expr> term(const std::vector<Token> &tokens, int &pos,
 std::unique_ptr<ast::Expr> comparison(const std::vector<Token> &tokens,
                                       int &pos, std::vector<ParseError> &errs) {
   std::unique_ptr<ast::Expr> leftOp = term(tokens, pos, errs);
-  switch (tokens[pos].getType()) {
+  switch (tokens[pos].type) {
   case TokenType::LESS:
   case TokenType::LESS_EQUAL:
   case TokenType::GREATER:
@@ -111,7 +110,7 @@ std::unique_ptr<ast::Expr> comparison(const std::vector<Token> &tokens,
 std::unique_ptr<ast::Expr> equality(const std::vector<Token> &tokens, int &pos,
                                     std::vector<ParseError> &errs) {
   std::unique_ptr<ast::Expr> leftOp = comparison(tokens, pos, errs);
-  switch (tokens[pos].getType()) {
+  switch (tokens[pos].type) {
   case TokenType::BANG_EQUAL:
   case TokenType::EQUAL_EQUAL: {
     const Token &tok = tokens[pos];

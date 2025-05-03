@@ -97,9 +97,6 @@ bool nextCharEquals(std::string_view code, int pos, char c) {
 }
 } // namespace
 
-Token::Token(TokenType type, std::string_view val, int line)
-    : d_type(type), d_val(val), d_line(line) {}
-
 std::vector<Token> scanTokens(const std::string_view code,
                               std::vector<SyntaxError> &errs) {
   std::vector<Token> tokens;
@@ -209,15 +206,9 @@ std::vector<Token> scanTokens(const std::string_view code,
   return tokens;
 }
 
-TokenType Token::getType() const { return d_type; }
-
-std::string_view Token::getVal() const { return d_val; }
-
-int Token::getLine() const { return d_line; }
-
 std::ostream &operator<<(std::ostream &os, const Token &tok) {
-  os << tokenutils::tokenTypeToStr(tok.getType()) << ":" << tok.getVal() << ":"
-     << tok.getLine();
+  os << tokenutils::tokenTypeToStr(tok.type) << ":" << tok.value << ":"
+     << tok.line;
   return os;
 }
 

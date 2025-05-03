@@ -112,7 +112,7 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
   Value lhs = std::visit(g_interpreter, *bnry.left);
   Value rhs = std::visit(g_interpreter, *bnry.right);
 
-  switch (bnry.op.getType()) {
+  switch (bnry.op.type) {
   case TokenType::PLUS:
     return std::visit(g_adder, lhs, rhs);
   case TokenType::MINUS:
@@ -135,13 +135,13 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
     return lhs <= rhs;
   default:
     throw InterpretException{{"Unable to interpret binary op: " +
-                              tokenutils::tokenTypeToStr(bnry.op.getType())}};
+                              tokenutils::tokenTypeToStr(bnry.op.type)}};
   }
 }
 
 Value InterpreterVisitor::operator()(const Unary &unry) {
   Value right = interpretOrThrow(unry.right);
-  switch (unry.op.getType()) {
+  switch (unry.op.type) {
   case TokenType::MINUS: {
     Value zero = 0.0;
     return std::visit(g_subtractor, zero, right);
@@ -150,7 +150,7 @@ Value InterpreterVisitor::operator()(const Unary &unry) {
     return !std::visit(g_truther, right);
   default:
     throw InterpretException{{"Unable to interpret unary op: " +
-                              tokenutils::tokenTypeToStr(unry.op.getType())}};
+                              tokenutils::tokenTypeToStr(unry.op.type)}};
   }
 }
 
