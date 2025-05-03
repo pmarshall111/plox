@@ -77,7 +77,7 @@ private:
 std::ostream &operator<<(std::ostream &os, const Token &tok);
 
 std::vector<Token> scanTokens(const std::string_view code,
-                              std::vector<SyntaxError> &errors);
+                              std::vector<SyntaxError> &errs);
 
 namespace tokenutils {
 std::string tokenTypeToStr(TokenType tt);
