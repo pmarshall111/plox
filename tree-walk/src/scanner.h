@@ -58,26 +58,18 @@ enum class TokenType {
   WHILE
 };
 
-class Token {
-public:
-  Token(TokenType type, std::string_view val, int line);
+struct Token {
+  TokenType type;
+  std::string_view value;
+  int line;
 
   bool operator==(const Token &) const = default;
-
-  TokenType getType() const;
-  std::string_view getVal() const;
-  int getLine() const;
-
-private:
-  TokenType d_type;
-  std::string_view d_val;
-  int d_line;
 };
 
 std::ostream &operator<<(std::ostream &os, const Token &tok);
 
 std::vector<Token> scanTokens(const std::string_view code,
-                              std::vector<SyntaxError> &errors);
+                              std::vector<SyntaxError> &errs);
 
 namespace tokenutils {
 std::string tokenTypeToStr(TokenType tt);
