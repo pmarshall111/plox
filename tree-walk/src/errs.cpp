@@ -13,5 +13,10 @@ std::ostream &operator<<(std::ostream &os, const SyntaxError &err) {
   return os;
 }
 
+std::ostream &operator<<(std::ostream &os, const InterpretError &err) {
+  os << "Message: " << err.d_msg;
+  return os;
+}
+
 } // namespace treewalk
 } // namespace plox

@@ -7,6 +7,10 @@
 namespace plox {
 namespace treewalk {
 
+struct InterpretError {
+  std::string d_msg;
+};
+
 struct ParseError {
   std::string d_msg;
 };
@@ -16,6 +20,7 @@ struct SyntaxError {
   int d_line;
 };
 
+std::ostream &operator<<(std::ostream &os, const InterpretError &err);
 std::ostream &operator<<(std::ostream &os, const ParseError &err);
 std::ostream &operator<<(std::ostream &os, const SyntaxError &err);
 
