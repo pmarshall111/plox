@@ -16,6 +16,10 @@ using Value = std::variant<std::monostate, std::string, bool, double>;
 Value interpret(const std::unique_ptr<ast::Expr> &expr,
                 std::vector<InterpretError> &errs);
 
+namespace interpretutils {
+std::string valueToString(const Value &v);
+}
+
 } // namespace treewalk
 } // namespace plox
 

@@ -213,5 +213,20 @@ Value interpret(const std::unique_ptr<ast::Expr> &expr,
   }
 }
 
+namespace interpretutils {
+struct PrintValVisitor {
+  std::string operator()(const auto &typedV) {
+    std::ostringstream ss;
+    ss << typedV;
+    return ss.str();
+  }
+  std::string operator()(std::monostate) { return "monostate"; }
+} g_printValVisitor;
+
+std::string valueToString(const Value &v) {
+  return std::visit(g_printValVisitor, v);
+}
+} // namespace interpretutils
+
 } // namespace treewalk
 } // namespace plox
