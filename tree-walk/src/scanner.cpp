@@ -76,10 +76,13 @@ struct CaseInsensCompare {
   bool operator()(const std::string_view &a, const std::string_view &b) const {
     // Compare functions in cpp assume true means a<b. Elements are considered
     // equal if !(a<b) && !(b<a)
-    if (a.size() != b.size()) {
-      return true;
+    int len = std::min(a.size(), b.size());
+    int cmp = strncasecmp(a.data(), b.data(), len);
+    if (cmp != 0) {
+      return cmp < 0;
     }
-    return strncasecmp(a.data(), b.data(), a.size()) < 0;
+    // Match! Make sure the sizes are the same
+    return a.size() < b.size();
   }
 };
 const std::map<std::string_view, TokenType, CaseInsensCompare> g_keywords{
