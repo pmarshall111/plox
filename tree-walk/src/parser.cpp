@@ -32,9 +32,10 @@ std::unique_ptr<ast::Expr> primary(const std::vector<Token> &tokens, int &pos,
     return std::make_unique<ast::Expr>(ast::Literal{tokens[pos++].value, type});
   }
   case TokenType::LEFT_PAREN: {
-    auto grp = std::make_unique<ast::Expr>(
-        ast::Grouping{expression(tokens, ++pos, errs)});
-    if (tokens[pos++].type == TokenType::RIGHT_PAREN) {
+    auto grp =
+        std::make_unique<ast::Expr>(ast::Grouping{expression(tokens, ++pos)});
+    if (tokens[pos].type == TokenType::RIGHT_PAREN) {
+      pos++;
       return grp;
     }
     errs.push_back({"No closing paren found!"});
