@@ -24,7 +24,7 @@ int run(const std::string &buff) {
 
   // Parse
   std::vector<ParseError> parsErrs;
-  auto ast = parse(tokens, parsErrs);
+  auto stmts = parse(tokens, parsErrs);
   if (parsErrs.size()) {
     for (auto &err : parsErrs) {
       std::cout << "Parse error: " << err << std::endl;
@@ -34,7 +34,7 @@ int run(const std::string &buff) {
 
   // Interpret
   std::vector<InterpretError> interpErrs;
-  auto val = interpret(ast, interpErrs);
+  auto val = interpret(stmts, interpErrs);
   if (interpErrs.size()) {
     for (auto &err : interpErrs) {
       std::cout << "Interpreter error: " << err << std::endl;
@@ -42,7 +42,6 @@ int run(const std::string &buff) {
     return -3;
   }
 
-  std::cout << interpretutils::valueToString(val) << std::endl;
   return 0;
 }
 
