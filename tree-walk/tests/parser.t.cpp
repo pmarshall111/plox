@@ -1,7 +1,11 @@
+#include <parser.h>
+
+#include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 
-#include <parser.h>
 #include <stmt_printer.h>
+
+using ::testing::HasSubstr;
 
 namespace plox {
 namespace treewalk {
@@ -148,6 +152,36 @@ TEST(Parser, SmokeError) {
 
   // Then
   ASSERT_EQ(1, errs.size());
+}
+
+TEST(Parser, AddrOutOfRangeNoSemiColon) {
+  // Given
+  std::vector<ParseError> errs;
+  // var a
+  std::vector<Token> toks{{TokenType::VAR, "var", 0},
+                          {TokenType::IDENTIFIER, "a", 0}};
+
+  // When
+  auto astRoot = parse(toks, errs);
+
+  // Then
+  ASSERT_EQ(1, errs.size());
+  ASSERT_THAT(errs[0].d_msg, ::HasSubstr("Incomplete statement"));
+}
+
+TEST(Parser, AddrOutOfRangeIncompleteStatement) {
+  // Given
+  std::vector<ParseError> errs;
+  // 1+
+  std::vector<Token> toks{{TokenType::NUMBER, "1", 0},
+                          {TokenType::PLUS, "+", 0}};
+
+  // When
+  auto astRoot = parse(toks, errs);
+
+  // Then
+  ASSERT_EQ(1, errs.size());
+  ASSERT_THAT(errs[0].d_msg, ::HasSubstr("Incomplete statement"));
 }
 
 } // namespace test
