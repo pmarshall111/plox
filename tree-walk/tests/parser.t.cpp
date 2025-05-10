@@ -12,18 +12,13 @@ TEST(Parser, smoke) {
   std::vector<ParseError> errs;
   // (5/1+2)*--8;
   std::string expected = "((group ((5/1)+2))*(-(-8)))";
-  std::vector<Token> toks{Token{TokenType::LEFT_PAREN, "(", 0},
-                          Token{TokenType::NUMBER, "5", 0},
-                          Token{TokenType::SLASH, "/", 0},
-                          Token{TokenType::NUMBER, "1", 0},
-                          Token{TokenType::PLUS, "+", 0},
-                          Token{TokenType::NUMBER, "2", 0},
-                          Token{TokenType::RIGHT_PAREN, ")", 0},
-                          Token{TokenType::STAR, "*", 0},
-                          Token{TokenType::MINUS, "-", 0},
-                          Token{TokenType::MINUS, "-", 0},
-                          Token{TokenType::NUMBER, "8", 0},
-                          Token{TokenType::SEMICOLON, ";", 0}};
+  std::vector<Token> toks{
+      {TokenType::LEFT_PAREN, "(", 0},  {TokenType::NUMBER, "5", 0},
+      {TokenType::SLASH, "/", 0},       {TokenType::NUMBER, "1", 0},
+      {TokenType::PLUS, "+", 0},        {TokenType::NUMBER, "2", 0},
+      {TokenType::RIGHT_PAREN, ")", 0}, {TokenType::STAR, "*", 0},
+      {TokenType::MINUS, "-", 0},       {TokenType::MINUS, "-", 0},
+      {TokenType::NUMBER, "8", 0},      {TokenType::SEMICOLON, ";", 0}};
 
   // When
   auto stmts = parse(toks, errs);
@@ -41,11 +36,11 @@ TEST(Parser, SmokeMultiStmt) {
   // 2-0;
   std::string expected = "(2-0)";
   std::vector<Token> toks{
-      Token{TokenType::LEFT_PAREN, "(", 0}, Token{TokenType::NUMBER, "5", 0},
-      Token{TokenType::PLUS, "+", 0},       Token{TokenType::NUMBER, "1", 0},
-      Token{TokenType::SEMICOLON, ";", 0},  Token{TokenType::NUMBER, "2", 1},
-      Token{TokenType::MINUS, "-", 1},      Token{TokenType::NUMBER, "0", 1},
-      Token{TokenType::SEMICOLON, ";", 1}};
+      {TokenType::LEFT_PAREN, "(", 0}, {TokenType::NUMBER, "5", 0},
+      {TokenType::PLUS, "+", 0},       {TokenType::NUMBER, "1", 0},
+      {TokenType::SEMICOLON, ";", 0},  {TokenType::NUMBER, "2", 1},
+      {TokenType::MINUS, "-", 1},      {TokenType::NUMBER, "0", 1},
+      {TokenType::SEMICOLON, ";", 1}};
 
   // When
   auto stmts = parse(toks, errs);
@@ -61,10 +56,10 @@ TEST(Parser, SmokeError) {
   std::vector<ParseError> errs;
   // (5+2*8;
   std::vector<Token> toks{
-      Token{TokenType::LEFT_PAREN, "(", 0}, Token{TokenType::NUMBER, "5", 0},
-      Token{TokenType::PLUS, "+", 0},       Token{TokenType::NUMBER, "2", 0},
-      Token{TokenType::STAR, "*", 0},       Token{TokenType::NUMBER, "8", 0},
-      Token{TokenType::SEMICOLON, ";", 0}};
+      {TokenType::LEFT_PAREN, "(", 0}, {TokenType::NUMBER, "5", 0},
+      {TokenType::PLUS, "+", 0},       {TokenType::NUMBER, "2", 0},
+      {TokenType::STAR, "*", 0},       {TokenType::NUMBER, "8", 0},
+      {TokenType::SEMICOLON, ";", 0}};
 
   // When
   auto astRoot = parse(toks, errs);
