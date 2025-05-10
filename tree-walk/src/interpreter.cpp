@@ -1,16 +1,22 @@
 #include <interpreter.h>
 
+#include <ast_printer.h>
+
 #include <charconv>
+#include <iostream>
 
 namespace plox {
 namespace treewalk {
 
 using namespace ast;
+using namespace stmt;
 
 namespace {
 // Visitors are defined for each interpret operation.
 
 struct InterpreterVisitor {
+  Value operator()(const Print &print);
+  Value operator()(const Expression &expr);
   Value operator()(const Binary &bin);
   Value operator()(const Grouping &grp);
   Value operator()(const Literal &ltrl);
@@ -52,10 +58,11 @@ public:
   explicit InterpretException(const InterpretError &err) : d_err(err) {}
 
   const char *what() const noexcept override {
-    static std::ostringstream ss;
-    ss.clear();
+    static std::string str;
+    std::ostringstream ss;
     ss << d_err;
-    return ss.str().c_str();
+    str = ss.str();
+    return str.c_str();
   }
 
   const InterpretError &getErr() const noexcept { return d_err; }
@@ -63,16 +70,6 @@ public:
 private:
   InterpretError d_err;
 };
-
-Value interpretOrThrow(const std::unique_ptr<ast::Expr> &expr) {
-  // Helper function since `interpret()` expects an errs vector
-  std::vector<InterpretError> errs;
-  Value val = interpret(expr, errs);
-  if (errs.size()) {
-    throw InterpretException{errs[0]};
-  }
-  return val;
-}
 
 double getNum(const Literal &ltrl) {
   double val;
@@ -87,6 +84,16 @@ double getNum(const Literal &ltrl) {
         {"Unable to read number: " + std::string(ltrl.value)}};
   }
   return val;
+}
+
+Value InterpreterVisitor::operator()(const Print &print) {
+  static ast::PrinterVisitor s_printerVisitor;
+  std::cout << std::visit(s_printerVisitor, *print.expr) << std::endl;
+  return {};
+}
+
+Value InterpreterVisitor::operator()(const Expression &expr) {
+  return std::visit(*this, *expr.expr);
 }
 
 Value InterpreterVisitor::operator()(const Literal &ltrl) {
@@ -140,7 +147,7 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
 }
 
 Value InterpreterVisitor::operator()(const Unary &unry) {
-  Value right = interpretOrThrow(unry.right);
+  Value right = std::visit(*this, *unry.right);
   switch (unry.op.type) {
   case TokenType::MINUS: {
     Value zero = 0.0;
@@ -155,7 +162,7 @@ Value InterpreterVisitor::operator()(const Unary &unry) {
 }
 
 Value InterpreterVisitor::operator()(const Grouping &grp) {
-  return interpretOrThrow(grp.expr);
+  return std::visit(*this, *grp.expr);
 }
 
 double AdditionVisitor::operator()(double l, double r) { return l + r; }
@@ -203,10 +210,15 @@ bool TruthyVisitor::operator()(auto &&) { return true; }
 
 } // namespace
 
-Value interpret(const std::unique_ptr<ast::Expr> &expr,
+Value interpret(const std::vector<stmt::Stmt> &stmts,
                 std::vector<InterpretError> &errs) {
   try {
-    return std::visit(g_interpreter, *expr);
+    for (const auto &s : stmts) {
+      std::visit(g_interpreter, s);
+    }
+    return {}; // TODO: Remove Value from return val. Interpreter now doesn't
+               // return anything but instead the output will be in a state
+               // object.
   } catch (const InterpretException &e) {
     errs.push_back({e.what()});
     return {};
