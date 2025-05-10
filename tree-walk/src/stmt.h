@@ -17,13 +17,20 @@ struct Expression;
 
 struct Print;
 
-using Stmt = std::variant<Expression, Print>;
+struct VarDecl;
+
+using Stmt = std::variant<Expression, Print, VarDecl>;
 
 struct Expression {
   std::unique_ptr<ast::Expr> expr;
 };
 
 struct Print {
+  std::unique_ptr<ast::Expr> expr;
+};
+
+struct VarDecl {
+  Token name;
   std::unique_ptr<ast::Expr> expr;
 };
 
