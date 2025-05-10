@@ -3,8 +3,10 @@
 // program        → statement* EOF ;
 //
 // statement      → exprStmt
-//                | printStmt ;
+//                | printStmt
+//                | varStmt ;
 //
+// varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
 // exprStmt       → expression ";" ;
 // printStmt      → "print" expression ";" ;
 
@@ -16,7 +18,7 @@
 // unary          → ( "!" | "-" ) unary
 //                | primary ;
 // primary        → NUMBER | STRING | "true" | "false" | "nil"
-//                | "(" expression ")" ;
+//                | "(" expression ")" | IDENTIFIER;
 
 // Recursive descent parsing starts at the rule of lowest precedence. TODO: why
 
@@ -58,6 +60,10 @@ std::unique_ptr<ast::Expr> primary(const std::vector<Token> &tokens, int &pos) {
   case TokenType::NUL: {
     TokenType type = tokens[pos].type;
     return std::make_unique<ast::Expr>(ast::Literal{tokens[pos++].value, type});
+  }
+  case TokenType::IDENTIFIER: {
+    TokenType type = tokens[pos].type;
+    return std::make_unique<ast::Expr>(ast::Variable{tokens[pos++].value});
   }
   case TokenType::LEFT_PAREN: {
     auto grp =
@@ -178,11 +184,40 @@ std::unique_ptr<stmt::Stmt> exprStatement(const std::vector<Token> &tokens,
   }
 }
 
+std::unique_ptr<stmt::Stmt> varStatement(const std::vector<Token> &tokens,
+                                         int &pos) {
+  const Token &varName = tokens[pos++];
+  if (varName.type != TokenType::IDENTIFIER) {
+    throw ParseException({"Variable declaration not followed by identifier!"});
+  }
+
+  switch (tokens[pos].type) {
+  case TokenType::SEMICOLON: {
+    pos++;
+    return std::make_unique<stmt::Stmt>(stmt::VarDecl{varName, {}});
+  }
+  case TokenType::EQUAL: {
+    auto expr = expression(tokens, ++pos);
+    if (tokens[pos].type == TokenType::SEMICOLON) {
+      pos++;
+      return std::make_unique<stmt::Stmt>(
+          stmt::VarDecl{varName, std::move(expr)});
+    }
+  }
+  default:
+    throw ParseException({"Invalid token following var decl!"});
+  }
+}
+
 std::unique_ptr<stmt::Stmt> statement(const std::vector<Token> &tokens,
                                       int &pos) {
   switch (tokens[pos].type) {
   case TokenType::PRINT:
-    return printStatement(tokens, ++pos);
+    return printStatement(
+        tokens,
+        ++pos); // TODO: Need checks for pos being within bounds of tokens vec
+  case TokenType::VAR:
+    return varStatement(tokens, ++pos);
   default:
     return exprStatement(tokens, pos);
   }
