@@ -52,27 +52,6 @@ struct TruthyVisitor {
   bool operator()(auto &&);
 } g_truther;
 
-// A wrapper around InterpretError. This is a solution to not being able to
-// call std::visit() with args that are not std::variant's.
-// Using exceptions also helps to stop executing a bad statement.
-class InterpretException : public std::exception {
-public:
-  explicit InterpretException(const InterpretError &err) : d_err(err) {}
-
-  const char *what() const noexcept override {
-    static std::string str;
-    std::ostringstream ss;
-    ss << d_err;
-    str = ss.str();
-    return str.c_str();
-  }
-
-  const InterpretError &getErr() const noexcept { return d_err; }
-
-private:
-  InterpretError d_err;
-};
-
 double getNum(const Literal &ltrl) {
   double val;
   auto start = ltrl.value.data();
@@ -227,7 +206,7 @@ bool TruthyVisitor::operator()(auto &&) { return true; }
 } // namespace
 
 Value interpret(const std::vector<stmt::Stmt> &stmts,
-                std::vector<InterpretError> &errs) {
+                std::vector<InterpretException> &errs) {
   try {
     for (const auto &s : stmts) {
       std::visit(g_interpreter, s);
@@ -236,7 +215,7 @@ Value interpret(const std::vector<stmt::Stmt> &stmts,
                // return anything but instead the output will be in a state
                // object.
   } catch (const InterpretException &e) {
-    errs.push_back({e.what()});
+    errs.push_back(e);
     return {};
   }
 }

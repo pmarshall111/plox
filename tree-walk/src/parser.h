@@ -10,7 +10,7 @@ namespace plox {
 namespace treewalk {
 
 std::vector<stmt::Stmt> parse(const std::vector<Token> &tokens,
-                              std::vector<ParseError> &errs);
+                              std::vector<ParseException> &errs);
 
 } // namespace treewalk
 } // namespace plox

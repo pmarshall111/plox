@@ -33,7 +33,7 @@ TEST(Interpreter, smoke) {
 
   ASSERT_EQ("((group ((5/1)+2))*(-(-8)))",
             std::visit(stmt::PrinterVisitor{}, statements[0]));
-  std::vector<InterpretError> errs;
+  std::vector<InterpretException> errs;
 
   // When
   auto val = interpret(statements, errs);
@@ -53,7 +53,7 @@ TEST(Interpreter, SmokeError) {
       std::make_unique<Expr>(
           Unary{Token{TokenType::MINUS, "-", 0},
                 std::make_unique<Expr>(Literal{"true", TokenType::TRUE})}));
-  std::vector<InterpretError> errs;
+  std::vector<InterpretException> errs;
 
   ASSERT_EQ("(-true)", std::visit(stmt::PrinterVisitor{}, statements[0]));
 

@@ -13,7 +13,7 @@ namespace treewalk {
 
 int run(const std::string &buff) {
   // Scan
-  std::vector<SyntaxError> syntErrs;
+  std::vector<SyntaxException> syntErrs;
   auto tokens = scanTokens(buff, syntErrs);
   if (syntErrs.size()) {
     for (auto &err : syntErrs) {
@@ -23,7 +23,7 @@ int run(const std::string &buff) {
   }
 
   // Parse
-  std::vector<ParseError> parsErrs;
+  std::vector<ParseException> parsErrs;
   auto stmts = parse(tokens, parsErrs);
   if (parsErrs.size()) {
     for (auto &err : parsErrs) {
@@ -33,7 +33,7 @@ int run(const std::string &buff) {
   }
 
   // Interpret
-  std::vector<InterpretError> interpErrs;
+  std::vector<InterpretException> interpErrs;
   auto val = interpret(stmts, interpErrs);
   if (interpErrs.size()) {
     for (auto &err : interpErrs) {

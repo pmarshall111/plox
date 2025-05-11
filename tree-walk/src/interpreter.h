@@ -14,7 +14,7 @@ namespace treewalk {
 using Value = std::variant<std::monostate, std::string, bool, double>;
 
 Value interpret(const std::vector<stmt::Stmt> &stmts,
-                std::vector<InterpretError> &errs);
+                std::vector<InterpretException> &errs);
 
 } // namespace treewalk
 } // namespace plox
