@@ -31,6 +31,12 @@ std::string PrinterVisitor::operator()(const Unary &unary) {
   return addParens(ss.str());
 }
 
+std::string PrinterVisitor::operator()(const Variable &var) {
+  std::ostringstream ss;
+  ss << "var " << var.name;
+  return addParens(ss.str());
+}
+
 } // namespace ast
 } // namespace treewalk
 } // namespace plox

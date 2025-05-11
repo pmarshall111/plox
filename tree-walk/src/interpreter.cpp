@@ -17,10 +17,12 @@ namespace {
 struct InterpreterVisitor {
   Value operator()(const Print &print);
   Value operator()(const Expression &expr);
+  Value operator()(const VarDecl &varDecl);
   Value operator()(const Binary &bin);
   Value operator()(const Grouping &grp);
   Value operator()(const Literal &ltrl);
   Value operator()(const Unary &unary);
+  Value operator()(const Variable &var);
 } g_interpreter;
 
 struct AdditionVisitor {
@@ -96,6 +98,15 @@ Value InterpreterVisitor::operator()(const Expression &expr) {
   return std::visit(*this, *expr.expr);
 }
 
+Value InterpreterVisitor::operator()(const VarDecl &varDecl) {
+  if (varDecl.expr) {
+    Value res = std::visit(*this, *varDecl.expr);
+    // TODO: Store var
+  }
+  // TODO: Store empty var
+  return {};
+}
+
 Value InterpreterVisitor::operator()(const Literal &ltrl) {
   switch (ltrl.type) {
   case TokenType::STRING:
@@ -159,6 +170,11 @@ Value InterpreterVisitor::operator()(const Unary &unry) {
     throw InterpretException{{"Unable to interpret unary op: " +
                               tokenutils::tokenTypeToStr(unry.op.type)}};
   }
+}
+
+Value InterpreterVisitor::operator()(const Variable &var) {
+  // TODO: Retrieve variable from environment
+  return {};
 }
 
 Value InterpreterVisitor::operator()(const Grouping &grp) {

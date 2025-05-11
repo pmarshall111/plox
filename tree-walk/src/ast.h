@@ -23,7 +23,9 @@ struct Literal;
 
 struct Unary;
 
-using Expr = std::variant<Binary, Grouping, Literal, Unary>;
+struct Variable;
+
+using Expr = std::variant<Binary, Grouping, Literal, Unary, Variable>;
 
 struct Binary {
   std::unique_ptr<Expr> left;
@@ -43,6 +45,10 @@ struct Literal {
 struct Unary {
   Token op;
   std::unique_ptr<Expr> right;
+};
+
+struct Variable {
+  std::string_view name;
 };
 
 } // namespace ast
