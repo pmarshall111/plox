@@ -66,6 +66,22 @@ TEST(Scanner, NoSpaces) {
   ASSERT_EQ(0, errors.size());
 }
 
+TEST(Scanner, Print) {
+  // Given
+  std::vector<SyntaxError> errors;
+  std::string code = "print 1;";
+  std::vector<Token> expected{Token{TokenType::PRINT, "print", 0},
+                              Token{TokenType::NUMBER, "1", 0},
+                              Token{TokenType::SEMICOLON, ";", 0}};
+
+  // When
+  auto vec = scanTokens(code, errors);
+
+  // Then
+  ASSERT_EQ(expected, vec);
+  ASSERT_EQ(0, errors.size());
+}
+
 } // namespace test
 } // namespace treewalk
 } // namespace plox

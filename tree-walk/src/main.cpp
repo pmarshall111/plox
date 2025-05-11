@@ -3,14 +3,45 @@
 #include <iostream>
 #include <optional>
 
+#include <ast_printer.h>
+#include <interpreter.h>
+#include <parser.h>
+#include <scanner.h>
+
 namespace plox {
 namespace treewalk {
 
-/*
- * Throws SyntaxException
- */
 int run(const std::string &buff) {
-  std::cout << "This was your command! " << buff << std::endl;
+  // Scan
+  std::vector<SyntaxError> syntErrs;
+  auto tokens = scanTokens(buff, syntErrs);
+  if (syntErrs.size()) {
+    for (auto &err : syntErrs) {
+      std::cout << "Syntax error: " << err << std::endl;
+    }
+    return -1;
+  }
+
+  // Parse
+  std::vector<ParseError> parsErrs;
+  auto stmts = parse(tokens, parsErrs);
+  if (parsErrs.size()) {
+    for (auto &err : parsErrs) {
+      std::cout << "Parse error: " << err << std::endl;
+    }
+    return -2;
+  }
+
+  // Interpret
+  std::vector<InterpretError> interpErrs;
+  auto val = interpret(stmts, interpErrs);
+  if (interpErrs.size()) {
+    for (auto &err : interpErrs) {
+      std::cout << "Interpreter error: " << err << std::endl;
+    }
+    return -3;
+  }
+
   return 0;
 }
 
