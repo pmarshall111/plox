@@ -15,15 +15,22 @@ namespace {
 // Visitors are defined for each interpret operation.
 
 struct InterpreterVisitor {
-  Value operator()(const Print &print);
-  Value operator()(const Expression &expr);
-  Value operator()(const VarDecl &varDecl);
+  InterpreterVisitor(Environment &env) : d_env(env){};
+
+  // Statements do not need to return anything
+  void operator()(const Print &print);
+  void operator()(const Expression &expr);
+  void operator()(const VarDecl &varDecl);
+  // Other operations called by statements return Values
   Value operator()(const Binary &bin);
   Value operator()(const Grouping &grp);
   Value operator()(const Literal &ltrl);
   Value operator()(const Unary &unary);
   Value operator()(const Variable &var);
-} g_interpreter;
+
+private:
+  Environment &d_env;
+};
 
 struct AdditionVisitor {
   double operator()(double l, double r);
@@ -52,27 +59,6 @@ struct TruthyVisitor {
   bool operator()(auto &&);
 } g_truther;
 
-// A wrapper around InterpretError. This is a solution to not being able to
-// call std::visit() with args that are not std::variant's.
-// Using exceptions also helps to stop executing a bad statement.
-class InterpretException : public std::exception {
-public:
-  explicit InterpretException(const InterpretError &err) : d_err(err) {}
-
-  const char *what() const noexcept override {
-    static std::string str;
-    std::ostringstream ss;
-    ss << d_err;
-    str = ss.str();
-    return str.c_str();
-  }
-
-  const InterpretError &getErr() const noexcept { return d_err; }
-
-private:
-  InterpretError d_err;
-};
-
 double getNum(const Literal &ltrl) {
   double val;
   auto start = ltrl.value.data();
@@ -88,23 +74,25 @@ double getNum(const Literal &ltrl) {
   return val;
 }
 
-Value InterpreterVisitor::operator()(const Print &print) {
-  static ast::PrinterVisitor s_printerVisitor;
-  std::cout << std::visit(s_printerVisitor, *print.expr) << std::endl;
-  return {};
+void InterpreterVisitor::operator()(const Print &print) {
+  // Calculate expression
+  Value v = std::visit(*this, *print.expr);
+  // Print
+  static ValuePrinter s_valuePrinter;
+  std::cout << std::visit(s_valuePrinter, v) << std::endl;
 }
 
-Value InterpreterVisitor::operator()(const Expression &expr) {
-  return std::visit(*this, *expr.expr);
+void InterpreterVisitor::operator()(const Expression &expr) {
+  std::visit(*this, *expr.expr);
 }
 
-Value InterpreterVisitor::operator()(const VarDecl &varDecl) {
+void InterpreterVisitor::operator()(const VarDecl &varDecl) {
+  auto name = std::string(varDecl.name);
+  Value val = {};
   if (varDecl.expr) {
-    Value res = std::visit(*this, *varDecl.expr);
-    // TODO: Store var
+    val = std::visit(*this, *varDecl.expr);
   }
-  // TODO: Store empty var
-  return {};
+  d_env.set(name, val);
 }
 
 Value InterpreterVisitor::operator()(const Literal &ltrl) {
@@ -127,8 +115,8 @@ Value InterpreterVisitor::operator()(const Literal &ltrl) {
 }
 
 Value InterpreterVisitor::operator()(const Binary &bnry) {
-  Value lhs = std::visit(g_interpreter, *bnry.left);
-  Value rhs = std::visit(g_interpreter, *bnry.right);
+  Value lhs = std::visit(*this, *bnry.left);
+  Value rhs = std::visit(*this, *bnry.right);
 
   switch (bnry.op.type) {
   case TokenType::PLUS:
@@ -173,8 +161,7 @@ Value InterpreterVisitor::operator()(const Unary &unry) {
 }
 
 Value InterpreterVisitor::operator()(const Variable &var) {
-  // TODO: Retrieve variable from environment
-  return {};
+  return d_env.get(std::string(var.name));
 }
 
 Value InterpreterVisitor::operator()(const Grouping &grp) {
@@ -226,18 +213,15 @@ bool TruthyVisitor::operator()(auto &&) { return true; }
 
 } // namespace
 
-Value interpret(const std::vector<stmt::Stmt> &stmts,
-                std::vector<InterpretError> &errs) {
+void interpret(const std::vector<stmt::Stmt> &stmts, Environment &env,
+               std::vector<InterpretException> &errs) {
   try {
+    InterpreterVisitor v{env};
     for (const auto &s : stmts) {
-      std::visit(g_interpreter, s);
+      std::visit(v, s);
     }
-    return {}; // TODO: Remove Value from return val. Interpreter now doesn't
-               // return anything but instead the output will be in a state
-               // object.
   } catch (const InterpretException &e) {
-    errs.push_back({e.what()});
-    return {};
+    errs.push_back(e);
   }
 }
 

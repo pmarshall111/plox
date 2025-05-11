@@ -27,27 +27,6 @@ namespace treewalk {
 
 namespace {
 
-// A wrapper around ParseError. Using exceptions helps to stop parsing a bad
-// statement.
-// TODO: Replace Errors with just these exception classes?
-class ParseException : public std::exception {
-public:
-  explicit ParseException(const ParseError &err) : d_err(err) {}
-
-  const char *what() const noexcept override {
-    static std::string str;
-    std::ostringstream ss;
-    ss << d_err;
-    str = ss.str();
-    return str.c_str();
-  }
-
-  const ParseError &getErr() const noexcept { return d_err; }
-
-private:
-  ParseError d_err;
-};
-
 class TokenStream {
 public:
   TokenStream(const std::vector<Token> &toks) : d_pos(0), d_toks(toks){};
@@ -223,7 +202,7 @@ std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream) {
   switch (tokStream.peek().type) {
   case TokenType::SEMICOLON: {
     tokStream.next();
-    return std::make_unique<stmt::Stmt>(stmt::VarDecl{varName, {}});
+    return std::make_unique<stmt::Stmt>(stmt::VarDecl{varName.value, {}});
   }
   case TokenType::EQUAL: {
     tokStream.next();
@@ -231,7 +210,7 @@ std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream) {
     if (tokStream.peek().type == TokenType::SEMICOLON) {
       tokStream.next();
       return std::make_unique<stmt::Stmt>(
-          stmt::VarDecl{varName, std::move(expr)});
+          stmt::VarDecl{varName.value, std::move(expr)});
     }
   }
   default:
@@ -257,7 +236,7 @@ std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
 } // namespace
 
 std::vector<stmt::Stmt> parse(const std::vector<Token> &tokens,
-                              std::vector<ParseError> &errs) {
+                              std::vector<ParseException> &errs) {
   std::vector<stmt::Stmt> statements;
   TokenStream tokStream{tokens};
   while (tokStream.hasNext()) {
@@ -268,7 +247,7 @@ std::vector<stmt::Stmt> parse(const std::vector<Token> &tokens,
     } catch (const ParseException &e) {
       // Error while parsing this statement. Continue parsing the next statement
       // so the user knows all errors in their code.
-      errs.push_back(e.getErr());
+      errs.push_back(e);
       tokStream.skipPastSemiColon();
     }
   }

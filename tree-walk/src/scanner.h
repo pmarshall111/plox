@@ -69,7 +69,7 @@ struct Token {
 std::ostream &operator<<(std::ostream &os, const Token &tok);
 
 std::vector<Token> scanTokens(const std::string_view code,
-                              std::vector<SyntaxError> &errs);
+                              std::vector<SyntaxException> &errs);
 
 namespace tokenutils {
 std::string tokenTypeToStr(TokenType tt);

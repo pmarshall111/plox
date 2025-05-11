@@ -13,7 +13,7 @@ namespace test {
 
 TEST(Parser, smoke) {
   // Given
-  std::vector<ParseError> errs;
+  std::vector<ParseException> errs;
   // (5/1+2)*--8;
   std::string expected = "((group ((5/1)+2))*(-(-8)))";
   std::vector<Token> toks{
@@ -36,7 +36,7 @@ TEST(Parser, smoke) {
 
 TEST(Parser, SmokeMultiStmt) {
   // Given
-  std::vector<ParseError> errs;
+  std::vector<ParseException> errs;
   // (5+1;
   // 2-0;
   std::string expected = "(2-0)";
@@ -59,7 +59,7 @@ TEST(Parser, SmokeMultiStmt) {
 
 TEST(Parser, VarDecl) {
   // Given
-  std::vector<ParseError> errs;
+  std::vector<ParseException> errs;
   // var a;
   std::string expected = "var a";
   std::vector<Token> toks{{TokenType::VAR, "var", 0},
@@ -78,7 +78,7 @@ TEST(Parser, VarDecl) {
 
 TEST(Parser, VarDef) {
   // Given
-  std::vector<ParseError> errs;
+  std::vector<ParseException> errs;
   // var a = true;
   std::string expected = "var a = true";
   std::vector<Token> toks{{TokenType::VAR, "var", 0},
@@ -99,7 +99,7 @@ TEST(Parser, VarDef) {
 
 TEST(Parser, VarUsage) {
   // Given
-  std::vector<ParseError> errs;
+  std::vector<ParseException> errs;
   // var a = b;
   std::string expected = "var a = (var b)";
   std::vector<Token> toks{{TokenType::VAR, "var", 0},
@@ -120,7 +120,7 @@ TEST(Parser, VarUsage) {
 
 TEST(Parser, PrintStmt) {
   // Given
-  std::vector<ParseError> errs;
+  std::vector<ParseException> errs;
   // print 1;
   std::string expected = "print 1";
   std::vector<Token> toks{{TokenType::PRINT, "print", 0},
@@ -139,7 +139,7 @@ TEST(Parser, PrintStmt) {
 
 TEST(Parser, SmokeError) {
   // Given
-  std::vector<ParseError> errs;
+  std::vector<ParseException> errs;
   // (5+2*8;
   std::vector<Token> toks{
       {TokenType::LEFT_PAREN, "(", 0}, {TokenType::NUMBER, "5", 0},
@@ -156,7 +156,7 @@ TEST(Parser, SmokeError) {
 
 TEST(Parser, AddrOutOfRangeNoSemiColon) {
   // Given
-  std::vector<ParseError> errs;
+  std::vector<ParseException> errs;
   // var a
   std::vector<Token> toks{{TokenType::VAR, "var", 0},
                           {TokenType::IDENTIFIER, "a", 0}};
@@ -166,12 +166,12 @@ TEST(Parser, AddrOutOfRangeNoSemiColon) {
 
   // Then
   ASSERT_EQ(1, errs.size());
-  ASSERT_THAT(errs[0].d_msg, ::HasSubstr("Incomplete statement"));
+  ASSERT_THAT(errs[0].what(), ::HasSubstr("Incomplete statement"));
 }
 
 TEST(Parser, AddrOutOfRangeIncompleteStatement) {
   // Given
-  std::vector<ParseError> errs;
+  std::vector<ParseException> errs;
   // 1+
   std::vector<Token> toks{{TokenType::NUMBER, "1", 0},
                           {TokenType::PLUS, "+", 0}};
@@ -181,7 +181,7 @@ TEST(Parser, AddrOutOfRangeIncompleteStatement) {
 
   // Then
   ASSERT_EQ(1, errs.size());
-  ASSERT_THAT(errs[0].d_msg, ::HasSubstr("Incomplete statement"));
+  ASSERT_THAT(errs[0].what(), ::HasSubstr("Incomplete statement"));
 }
 
 } // namespace test

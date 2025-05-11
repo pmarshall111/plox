@@ -7,22 +7,25 @@
 namespace plox {
 namespace treewalk {
 
-struct InterpretError {
-  std::string d_msg;
+class InterpretException : public std::runtime_error {
+public:
+  explicit InterpretException(const std::string &msg)
+      : std::runtime_error(msg){};
 };
 
-struct ParseError {
-  std::string d_msg;
+class ParseException : public std::runtime_error {
+public:
+  explicit ParseException(const std::string &msg) : std::runtime_error(msg){};
 };
 
-struct SyntaxError {
-  std::string d_msg;
-  int d_line;
+class SyntaxException : public std::runtime_error {
+public:
+  static std::string formatMsg(const std::string &msg, int line);
+  explicit SyntaxException(const std::string &msg, int line)
+      : std::runtime_error(formatMsg(msg, line)){};
 };
 
-std::ostream &operator<<(std::ostream &os, const InterpretError &err);
-std::ostream &operator<<(std::ostream &os, const ParseError &err);
-std::ostream &operator<<(std::ostream &os, const SyntaxError &err);
+std::ostream &operator<<(std::ostream &os, const std::runtime_error &err);
 
 } // namespace treewalk
 } // namespace plox

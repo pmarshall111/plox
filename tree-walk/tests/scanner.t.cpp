@@ -8,7 +8,7 @@ namespace test {
 
 TEST(Scanner, Assignment) {
   // Given
-  std::vector<SyntaxError> errors;
+  std::vector<SyntaxException> errors;
   std::string code = R"(var a = "hi")";
   std::vector<Token> expected{
       Token{TokenType::VAR, "var", 0}, Token{TokenType::IDENTIFIER, "a", 0},
@@ -24,7 +24,7 @@ TEST(Scanner, Assignment) {
 
 TEST(Scanner, UnterminatedStringErr) {
   // Given
-  std::vector<SyntaxError> errors;
+  std::vector<SyntaxException> errors;
   std::string code = R"(var a = "hi)"; // unterminated string
 
   // When
@@ -36,7 +36,7 @@ TEST(Scanner, UnterminatedStringErr) {
 
 TEST(Scanner, Addition) {
   // Given
-  std::vector<SyntaxError> errors;
+  std::vector<SyntaxException> errors;
   std::string code = "1+2";
   std::vector<Token> expected{Token{TokenType::NUMBER, "1", 0},
                               Token{TokenType::PLUS, "+", 0},
@@ -52,7 +52,7 @@ TEST(Scanner, Addition) {
 
 TEST(Scanner, NoSpaces) {
   // Given
-  std::vector<SyntaxError> errors;
+  std::vector<SyntaxException> errors;
   std::string code = "var B=1";
   std::vector<Token> expected{
       Token{TokenType::VAR, "var", 0}, Token{TokenType::IDENTIFIER, "B", 0},
@@ -68,7 +68,7 @@ TEST(Scanner, NoSpaces) {
 
 TEST(Scanner, Print) {
   // Given
-  std::vector<SyntaxError> errors;
+  std::vector<SyntaxException> errors;
   std::string code = "print 1;";
   std::vector<Token> expected{Token{TokenType::PRINT, "print", 0},
                               Token{TokenType::NUMBER, "1", 0},

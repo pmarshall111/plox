@@ -1,20 +1,17 @@
 #ifndef PLOX_INTERPRETER
 #define PLOX_INTERPRETER
 
-#include <err.h>
+#include <environment.h>
+#include <errs.h>
 #include <stmt.h>
 
-#include <memory>
-#include <string>
-#include <variant>
+#include <vector>
 
 namespace plox {
 namespace treewalk {
 
-using Value = std::variant<std::monostate, std::string, bool, double>;
-
-Value interpret(const std::vector<stmt::Stmt> &stmts,
-                std::vector<InterpretError> &errs);
+void interpret(const std::vector<stmt::Stmt> &stmts, Environment &env,
+               std::vector<InterpretException> &errs);
 
 } // namespace treewalk
 } // namespace plox

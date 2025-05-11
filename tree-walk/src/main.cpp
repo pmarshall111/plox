@@ -11,9 +11,13 @@
 namespace plox {
 namespace treewalk {
 
+namespace {
+Environment s_globals;
+}
+
 int run(const std::string &buff) {
   // Scan
-  std::vector<SyntaxError> syntErrs;
+  std::vector<SyntaxException> syntErrs;
   auto tokens = scanTokens(buff, syntErrs);
   if (syntErrs.size()) {
     for (auto &err : syntErrs) {
@@ -23,7 +27,7 @@ int run(const std::string &buff) {
   }
 
   // Parse
-  std::vector<ParseError> parsErrs;
+  std::vector<ParseException> parsErrs;
   auto stmts = parse(tokens, parsErrs);
   if (parsErrs.size()) {
     for (auto &err : parsErrs) {
@@ -33,8 +37,8 @@ int run(const std::string &buff) {
   }
 
   // Interpret
-  std::vector<InterpretError> interpErrs;
-  auto val = interpret(stmts, interpErrs);
+  std::vector<InterpretException> interpErrs;
+  interpret(stmts, s_globals, interpErrs);
   if (interpErrs.size()) {
     for (auto &err : interpErrs) {
       std::cout << "Interpreter error: " << err << std::endl;

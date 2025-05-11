@@ -9,22 +9,22 @@ namespace treewalk {
 
 namespace {
 // All scanXXX() methods are to leave pos at the last char of the token
-std::optional<SyntaxError> scanNumber(std::string_view code, int &pos,
-                                      std::string_view &out, int line) {
+std::optional<SyntaxException> scanNumber(std::string_view code, int &pos,
+                                          std::string_view &out, int line) {
   int numDots = 0;
   int start = pos;
   for (; pos < code.size(); pos++) {
     // Dot handling
     if (code.at(pos) == '.') {
       if (numDots > 0) {
-        return SyntaxError("More than 1 dot found in number", line);
+        return SyntaxException("More than 1 dot found in number", line);
       }
 
       numDots++;
 
       // There must be a number after the dot.
       if (pos + 1 == code.size() || !isdigit(code.at(pos + 1))) {
-        return SyntaxError("Trailing dot found in number", line);
+        return SyntaxException("Trailing dot found in number", line);
       }
     }
 
@@ -40,8 +40,8 @@ std::optional<SyntaxError> scanNumber(std::string_view code, int &pos,
   return std::nullopt;
 }
 
-std::optional<SyntaxError> scanString(std::string_view code, int &pos,
-                                      std::string_view &out, int &line) {
+std::optional<SyntaxException> scanString(std::string_view code, int &pos,
+                                          std::string_view &out, int &line) {
   int start = pos;
   pos++; // Skip initial open quotes
   for (; pos < code.size(); pos++) {
@@ -55,7 +55,7 @@ std::optional<SyntaxError> scanString(std::string_view code, int &pos,
     }
   }
 
-  return SyntaxError("Unterminated string!", line);
+  return SyntaxException("Unterminated string!", line);
 }
 
 void scanLiteral(std::string_view code, int &pos, std::string_view &out) {
@@ -101,7 +101,7 @@ bool nextCharEquals(std::string_view code, int pos, char c) {
 } // namespace
 
 std::vector<Token> scanTokens(const std::string_view code,
-                              std::vector<SyntaxError> &errs) {
+                              std::vector<SyntaxException> &errs) {
   std::vector<Token> tokens;
 
   int line = 0;
@@ -171,17 +171,17 @@ std::vector<Token> scanTokens(const std::string_view code,
     // literals
     else if (isdigit(c)) {
       std::string_view num;
-      auto syntaxError = scanNumber(code, pos, num, line);
-      if (syntaxError) {
-        errs.push_back(syntaxError.value());
+      auto SyntaxException = scanNumber(code, pos, num, line);
+      if (SyntaxException) {
+        errs.push_back(SyntaxException.value());
       } else {
         tokens.emplace_back(TokenType::NUMBER, num, line);
       }
     } else if (c == '"') {
       std::string_view str;
-      auto syntaxError = scanString(code, pos, str, line);
-      if (syntaxError) {
-        errs.push_back(syntaxError.value());
+      auto SyntaxException = scanString(code, pos, str, line);
+      if (SyntaxException) {
+        errs.push_back(SyntaxException.value());
       } else {
         tokens.emplace_back(TokenType::STRING, str, line);
       }

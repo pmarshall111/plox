@@ -30,7 +30,7 @@ struct Print {
 };
 
 struct VarDecl {
-  Token name;
+  std::string_view name;
   std::unique_ptr<ast::Expr> expr;
 };
 

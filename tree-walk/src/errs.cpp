@@ -3,18 +3,14 @@
 namespace plox {
 namespace treewalk {
 
-std::ostream &operator<<(std::ostream &os, const ParseError &err) {
-  os << "Message: " << err.d_msg;
-  return os;
+std::string SyntaxException::formatMsg(const std::string &msg, int line) {
+  std::ostringstream ss;
+  ss << msg << " on line " << line;
+  return ss.str();
 }
 
-std::ostream &operator<<(std::ostream &os, const SyntaxError &err) {
-  os << "Line: " << err.d_line << ". Message: " << err.d_msg;
-  return os;
-}
-
-std::ostream &operator<<(std::ostream &os, const InterpretError &err) {
-  os << "Message: " << err.d_msg;
+std::ostream &operator<<(std::ostream &os, const std::runtime_error &ex) {
+  os << "Message: " << ex.what();
   return os;
 }
 

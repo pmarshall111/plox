@@ -95,11 +95,11 @@ if __name__ == "__main__":
         {"name": "Grouping", "members": [{"type": "std::unique_ptr<Expr>", "name": "expr"}]},
         {"name": "Literal", "members": [{"type": "std::string_view", "name": "value"}, {"type": "TokenType", "name": "type"}]},
         {"name": "Unary", "members": [{"type": "Token", "name": "op"}, {"type": "std::unique_ptr<Expr>", "name": "right"}]},
-        {"name": "Variable", "members": [{"type": "Token", "name": "name"}]}
+        {"name": "Variable", "members": [{"type": "std::string_view", "name": "name"}]}
     ])
 
     define_ast("tree-walk/src/stmt.h", "STMT", "Stmt", ["plox", "treewalk", "stmt"], ["ast.h", "memory", "variant"], [
         {"name": "Expression", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]},
         {"name": "Print", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]},
-        {"name": "VarDecl", "members": [{"type": "Token", "name": "name"}, {"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]}
+        {"name": "VarDecl", "members": [{"type": "std::string_view", "name": "name"}, {"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]}
     ])
