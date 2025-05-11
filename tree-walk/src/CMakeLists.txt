@@ -1,7 +1,15 @@
 find_package(CLI11 CONFIG REQUIRED)
 
-add_library(tree-walk-lib ast_printer.cpp errs.cpp interpreter.cpp parser.cpp
-                          scanner.cpp stmt_printer.cpp)
+add_library(
+  tree-walk-lib
+  ast_printer.cpp
+  environment.cpp
+  errs.cpp
+  interpreter.cpp
+  parser.cpp
+  scanner.cpp
+  stmt_printer.cpp
+  value.cpp)
 target_include_directories(tree-walk-lib PUBLIC .)
 target_compile_options(tree-walk-lib PRIVATE -ggdb)
 

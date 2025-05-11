@@ -202,7 +202,7 @@ std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream) {
   switch (tokStream.peek().type) {
   case TokenType::SEMICOLON: {
     tokStream.next();
-    return std::make_unique<stmt::Stmt>(stmt::VarDecl{varName, {}});
+    return std::make_unique<stmt::Stmt>(stmt::VarDecl{varName.value, {}});
   }
   case TokenType::EQUAL: {
     tokStream.next();
@@ -210,7 +210,7 @@ std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream) {
     if (tokStream.peek().type == TokenType::SEMICOLON) {
       tokStream.next();
       return std::make_unique<stmt::Stmt>(
-          stmt::VarDecl{varName, std::move(expr)});
+          stmt::VarDecl{varName.value, std::move(expr)});
     }
   }
   default:

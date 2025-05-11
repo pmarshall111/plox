@@ -11,6 +11,10 @@
 namespace plox {
 namespace treewalk {
 
+namespace {
+Environment s_globals;
+}
+
 int run(const std::string &buff) {
   // Scan
   std::vector<SyntaxException> syntErrs;
@@ -34,7 +38,7 @@ int run(const std::string &buff) {
 
   // Interpret
   std::vector<InterpretException> interpErrs;
-  auto val = interpret(stmts, interpErrs);
+  interpret(stmts, s_globals, interpErrs);
   if (interpErrs.size()) {
     for (auto &err : interpErrs) {
       std::cout << "Interpreter error: " << err << std::endl;

@@ -22,7 +22,7 @@ std::string PrinterVisitor::operator()(const Expression &expr) {
 
 std::string PrinterVisitor::operator()(const VarDecl &varDecl) {
   std::ostringstream ss;
-  ss << "var " << varDecl.name.value;
+  ss << "var " << varDecl.name;
   if (varDecl.expr) {
     ss << " = " << std::visit(g_astPrinterVisitor, *varDecl.expr);
   }
