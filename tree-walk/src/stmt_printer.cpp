@@ -10,14 +10,14 @@ namespace {
 ast::PrinterVisitor g_astPrinterVisitor;
 }
 
+std::string PrinterVisitor::operator()(const Expression &expr) {
+  return std::visit(g_astPrinterVisitor, *expr.expr);
+}
+
 std::string PrinterVisitor::operator()(const Print &print) {
   std::ostringstream ss;
   ss << "print " << std::visit(g_astPrinterVisitor, *print.expr);
   return ss.str();
-}
-
-std::string PrinterVisitor::operator()(const Expression &expr) {
-  return std::visit(g_astPrinterVisitor, *expr.expr);
 }
 
 std::string PrinterVisitor::operator()(const VarDecl &varDecl) {

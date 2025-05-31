@@ -98,20 +98,20 @@ TEST(Interpreter, UseVar) {
 TEST(Interpreter, ReassignVar) {
   // Given
   // var a = 3;
-  // var a = 2 * a;
+  // a = 2 * a;
   std::vector<stmt::Stmt> statements;
   statements.emplace_back(stmt::VarDecl{
       "a", std::make_unique<Expr>(Literal{"3", TokenType::NUMBER})});
-  statements.emplace_back(stmt::VarDecl{
-      "a", std::make_unique<Expr>(
-               Binary{std::make_unique<Expr>(Literal{"2", TokenType::NUMBER}),
+  statements.emplace_back(stmt::Expression{std::make_unique<Expr>(
+      Assign{"a", std::make_unique<Expr>(Binary{
+                      std::make_unique<Expr>(Literal{"2", TokenType::NUMBER}),
                       Token{TokenType::STAR, "*", 1},
-                      std::make_unique<Expr>(Variable{"a"})})});
+                      std::make_unique<Expr>(Variable{"a"})})})});
   std::vector<InterpretException> errs;
   Environment env;
 
   ASSERT_EQ("var a = 3", std::visit(stmt::PrinterVisitor{}, statements[0]));
-  ASSERT_EQ("var a = (2*(var a))",
+  ASSERT_EQ("(a=(2*(var a)))",
             std::visit(stmt::PrinterVisitor{}, statements[1]));
 
   // When

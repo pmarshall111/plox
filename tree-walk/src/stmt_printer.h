@@ -10,8 +10,8 @@ namespace treewalk {
 namespace stmt {
 
 struct PrinterVisitor {
-  std::string operator()(const Print &print);
   std::string operator()(const Expression &expr);
+  std::string operator()(const Print &print);
   std::string operator()(const VarDecl &varDecl);
 };
 

@@ -8,6 +8,12 @@ namespace {
 std::string addParens(const std::string &str) { return "(" + str + ")"; }
 } // namespace
 
+std::string PrinterVisitor::operator()(const Assign &assign) {
+  std::ostringstream ss;
+  ss << assign.name << "=" << std::visit(*this, *assign.value);
+  return addParens(ss.str());
+}
+
 std::string PrinterVisitor::operator()(const Binary &bin) {
   std::ostringstream ss;
   ss << std::visit(*this, *bin.left) << bin.op.value

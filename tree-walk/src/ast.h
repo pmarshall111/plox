@@ -15,6 +15,8 @@ namespace plox {
 namespace treewalk {
 namespace ast {
 
+struct Assign;
+
 struct Binary;
 
 struct Grouping;
@@ -25,7 +27,12 @@ struct Unary;
 
 struct Variable;
 
-using Expr = std::variant<Binary, Grouping, Literal, Unary, Variable>;
+using Expr = std::variant<Assign, Binary, Grouping, Literal, Unary, Variable>;
+
+struct Assign {
+  std::string_view name;
+  std::unique_ptr<Expr> value;
+};
 
 struct Binary {
   std::unique_ptr<Expr> left;

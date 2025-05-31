@@ -148,10 +148,11 @@ TEST(Parser, SmokeError) {
       {TokenType::SEMICOLON, ";", 0}};
 
   // When
-  auto astRoot = parse(toks, errs);
+  auto stmts = parse(toks, errs);
 
   // Then
   ASSERT_EQ(1, errs.size());
+  ASSERT_EQ(0, stmts.size());
 }
 
 TEST(Parser, AddrOutOfRangeNoSemiColon) {
@@ -162,11 +163,12 @@ TEST(Parser, AddrOutOfRangeNoSemiColon) {
                           {TokenType::IDENTIFIER, "a", 0}};
 
   // When
-  auto astRoot = parse(toks, errs);
+  auto stmts = parse(toks, errs);
 
   // Then
   ASSERT_EQ(1, errs.size());
   ASSERT_THAT(errs[0].what(), ::HasSubstr("Incomplete statement"));
+  ASSERT_EQ(0, stmts.size());
 }
 
 TEST(Parser, AddrOutOfRangeIncompleteStatement) {
@@ -177,11 +179,60 @@ TEST(Parser, AddrOutOfRangeIncompleteStatement) {
                           {TokenType::PLUS, "+", 0}};
 
   // When
-  auto astRoot = parse(toks, errs);
+  auto stmts = parse(toks, errs);
 
   // Then
   ASSERT_EQ(1, errs.size());
   ASSERT_THAT(errs[0].what(), ::HasSubstr("Incomplete statement"));
+  ASSERT_EQ(0, stmts.size());
+}
+
+TEST(Parser, Assign) {
+  // Given
+  std::vector<ParseException> errs;
+  // var a = 1;
+  // a = 2;
+  std::string expected1 = "var a = 1";
+  std::string expected2 = "(a=2)";
+  std::vector<Token> toks{
+      {TokenType::VAR, "var", 0},      {TokenType::IDENTIFIER, "a", 0},
+      {TokenType::EQUAL, "=", 0},      {TokenType::NUMBER, "1", 0},
+      {TokenType::SEMICOLON, ";", 0},
+
+      {TokenType::IDENTIFIER, "a", 1}, {TokenType::EQUAL, "=", 1},
+      {TokenType::NUMBER, "2", 1},     {TokenType::SEMICOLON, ";", 1},
+  };
+
+  // When
+  auto stmts = parse(toks, errs);
+
+  // Then
+  ASSERT_EQ(0, errs.size());
+  ASSERT_EQ(2, stmts.size());
+  ASSERT_TRUE(std::holds_alternative<stmt::VarDecl>(stmts[0]));
+  ASSERT_EQ(expected1, std::visit(stmt::PrinterVisitor{}, stmts[0]));
+  ASSERT_TRUE(std::holds_alternative<stmt::Expression>(stmts[1]));
+  ASSERT_EQ(expected2, std::visit(stmt::PrinterVisitor{}, stmts[1]));
+}
+
+TEST(Parser, AssignToRVal) {
+  // Given
+  std::vector<ParseException> errs;
+  // 2*3 = 2;
+  std::string expected = "((2*3)=2)";
+  std::vector<Token> toks{
+      {TokenType::NUMBER, "2", 0}, {TokenType::STAR, "*", 0},
+      {TokenType::NUMBER, "3", 0}, {TokenType::EQUAL, "=", 0},
+      {TokenType::NUMBER, "2", 0}, {TokenType::SEMICOLON, ";", 0},
+  };
+
+  // When
+  auto stmts = parse(toks, errs);
+
+  // Then
+  ASSERT_EQ(1, errs.size());
+  ASSERT_THAT(errs[0].what(), ::HasSubstr("r-value"));
+  ASSERT_EQ(0, stmts.size());
 }
 
 } // namespace test

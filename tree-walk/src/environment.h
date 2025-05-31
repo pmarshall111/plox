@@ -14,7 +14,8 @@ class Environment {
 public:
   Environment() = default;
 
-  void set(const std::string &name, Value v = {});
+  void assign(const std::string &name, Value v);
+  void define(const std::string &name, Value v = {});
   Value get(const std::string &name) const;
 
 private:
