@@ -10,6 +10,7 @@ namespace treewalk {
 namespace ast {
 
 struct PrinterVisitor {
+  std::string operator()(const Assign &assign);
   std::string operator()(const Binary &bin);
   std::string operator()(const Grouping &grp);
   std::string operator()(const Literal &ltrl);

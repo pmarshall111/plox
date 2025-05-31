@@ -91,6 +91,7 @@ class NamespaceGuard:
 
 if __name__ == "__main__":
     define_ast("tree-walk/src/ast.h", "AST", "Expr", ["plox", "treewalk", "ast"], ["memory", "string", "variant", "scanner.h"], [
+        {"name": "Assign", "members": [{"type": "std::string_view", "name": "name"}, {"type": "std::unique_ptr<Expr>", "name": "value"}]},
         {"name": "Binary", "members": [{"type": "std::unique_ptr<Expr>", "name": "left"}, {"type": "Token", "name": "op"}, {"type": "std::unique_ptr<Expr>", "name": "right"}]},
         {"name": "Grouping", "members": [{"type": "std::unique_ptr<Expr>", "name": "expr"}]},
         {"name": "Literal", "members": [{"type": "std::string_view", "name": "value"}, {"type": "TokenType", "name": "type"}]},
