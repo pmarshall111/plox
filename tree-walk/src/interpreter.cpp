@@ -22,6 +22,7 @@ struct InterpreterVisitor {
   void operator()(const Expression &expr);
   void operator()(const VarDecl &varDecl);
   // Other operations called by statements return Values
+  Value operator()(const Assign &assign);
   Value operator()(const Binary &bin);
   Value operator()(const Grouping &grp);
   Value operator()(const Literal &ltrl);
@@ -92,7 +93,7 @@ void InterpreterVisitor::operator()(const VarDecl &varDecl) {
   if (varDecl.expr) {
     val = std::visit(*this, *varDecl.expr);
   }
-  d_env.set(name, val);
+  d_env.define(name, val);
 }
 
 Value InterpreterVisitor::operator()(const Literal &ltrl) {
@@ -112,6 +113,13 @@ Value InterpreterVisitor::operator()(const Literal &ltrl) {
     throw InterpretException{
         {"Unable to interpret type: " + tokenutils::tokenTypeToStr(ltrl.type)}};
   }
+}
+
+Value InterpreterVisitor::operator()(const Assign &assign) {
+  auto name = std::string(assign.name);
+  Value val = std::visit(*this, *assign.value);
+  d_env.assign(name, val);
+  return val;
 }
 
 Value InterpreterVisitor::operator()(const Binary &bnry) {
