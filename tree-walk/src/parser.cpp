@@ -10,7 +10,8 @@
 // exprStmt       → expression ";" ;
 // printStmt      → "print" expression ";" ;
 
-// expression     → equality ;
+// expression     → assignment ;
+// assignment     → IDENTIFIER "=" assignment | equality ;
 // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 // comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 // term           → factor ( ( "-" | "+" ) factor )* ;
@@ -162,8 +163,25 @@ std::unique_ptr<ast::Expr> equality(TokenStream &tokStream) {
   }
 }
 
+std::unique_ptr<ast::Expr> assignment(TokenStream &tokStream) {
+  std::unique_ptr<ast::Expr> exp = equality(tokStream);
+
+  if (TokenType::EQUAL == tokStream.peek().type) {
+    tokStream.next();
+    if (!std::holds_alternative<ast::Variable>(*exp)) {
+      throw ParseException({"Cannot assign to r-value"});
+    }
+
+    std::string_view name = std::get<ast::Variable>(*exp).name;
+    return std::make_unique<ast::Expr>(
+        ast::Assign{name, assignment(tokStream)});
+  }
+
+  return exp;
+}
+
 std::unique_ptr<ast::Expr> expression(TokenStream &tokStream) {
-  return equality(tokStream);
+  return assignment(tokStream);
 }
 
 std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
