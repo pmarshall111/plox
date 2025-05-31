@@ -18,8 +18,8 @@ struct InterpreterVisitor {
   InterpreterVisitor(Environment &env) : d_env(env){};
 
   // Statements do not need to return anything
-  void operator()(const Print &print);
   void operator()(const Expression &expr);
+  void operator()(const Print &print);
   void operator()(const VarDecl &varDecl);
   // Other operations called by statements return Values
   Value operator()(const Assign &assign);
@@ -75,16 +75,16 @@ double getNum(const Literal &ltrl) {
   return val;
 }
 
+void InterpreterVisitor::operator()(const Expression &expr) {
+  std::visit(*this, *expr.expr);
+}
+
 void InterpreterVisitor::operator()(const Print &print) {
   // Calculate expression
   Value v = std::visit(*this, *print.expr);
   // Print
   static ValuePrinter s_valuePrinter;
   std::cout << std::visit(s_valuePrinter, v) << std::endl;
-}
-
-void InterpreterVisitor::operator()(const Expression &expr) {
-  std::visit(*this, *expr.expr);
 }
 
 void InterpreterVisitor::operator()(const VarDecl &varDecl) {
@@ -94,25 +94,6 @@ void InterpreterVisitor::operator()(const VarDecl &varDecl) {
     val = std::visit(*this, *varDecl.expr);
   }
   d_env.define(name, val);
-}
-
-Value InterpreterVisitor::operator()(const Literal &ltrl) {
-  switch (ltrl.type) {
-  case TokenType::STRING:
-    return std::string(ltrl.value);
-  case TokenType::NUMBER: {
-    return getNum(ltrl);
-  }
-  case TokenType::TRUE:
-    return true;
-  case TokenType::FALSE:
-    return false;
-  case TokenType::NUL:
-    return {};
-  default:
-    throw InterpretException{
-        {"Unable to interpret type: " + tokenutils::tokenTypeToStr(ltrl.type)}};
-  }
 }
 
 Value InterpreterVisitor::operator()(const Assign &assign) {
@@ -153,6 +134,29 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
   }
 }
 
+Value InterpreterVisitor::operator()(const Grouping &grp) {
+  return std::visit(*this, *grp.expr);
+}
+
+Value InterpreterVisitor::operator()(const Literal &ltrl) {
+  switch (ltrl.type) {
+  case TokenType::STRING:
+    return std::string(ltrl.value);
+  case TokenType::NUMBER: {
+    return getNum(ltrl);
+  }
+  case TokenType::TRUE:
+    return true;
+  case TokenType::FALSE:
+    return false;
+  case TokenType::NUL:
+    return {};
+  default:
+    throw InterpretException{
+        {"Unable to interpret type: " + tokenutils::tokenTypeToStr(ltrl.type)}};
+  }
+}
+
 Value InterpreterVisitor::operator()(const Unary &unry) {
   Value right = std::visit(*this, *unry.right);
   switch (unry.op.type) {
@@ -170,10 +174,6 @@ Value InterpreterVisitor::operator()(const Unary &unry) {
 
 Value InterpreterVisitor::operator()(const Variable &var) {
   return d_env.get(std::string(var.name));
-}
-
-Value InterpreterVisitor::operator()(const Grouping &grp) {
-  return std::visit(*this, *grp.expr);
 }
 
 double AdditionVisitor::operator()(double l, double r) { return l + r; }
