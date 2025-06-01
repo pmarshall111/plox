@@ -34,7 +34,7 @@ public:
 
   const Token &peek() const {
     if (d_pos >= d_toks.size()) {
-      throw ParseException{{"Incomplete statement - expected more tokens!"}};
+      throw ParseException("Incomplete statement - expected more tokens!");
     }
     return d_toks[d_pos];
   };
@@ -81,10 +81,10 @@ std::unique_ptr<ast::Expr> primary(TokenStream &tokStream) {
       tokStream.next();
       return grp;
     }
-    throw ParseException({"No closing paren found!"});
+    throw ParseException("No closing paren found!");
   }
   default:
-    throw ParseException({"Unknown token!"});
+    throw ParseException("Unknown token!");
   }
 }
 
@@ -169,7 +169,7 @@ std::unique_ptr<ast::Expr> assignment(TokenStream &tokStream) {
   if (TokenType::EQUAL == tokStream.peek().type) {
     tokStream.next();
     if (!std::holds_alternative<ast::Variable>(*exp)) {
-      throw ParseException({"Cannot assign to r-value"});
+      throw ParseException("Cannot assign to r-value");
     }
 
     std::string_view name = std::get<ast::Variable>(*exp).name;
@@ -193,7 +193,7 @@ std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
   }
   default:
     // TODO: make better error message - line? surrounding toks?
-    throw ParseException({"No ending semi colon found!"});
+    throw ParseException("No ending semi colon found!");
   }
 }
 
@@ -206,7 +206,7 @@ std::unique_ptr<stmt::Stmt> exprStatement(TokenStream &tokStream) {
   }
   default:
     // TODO: make better error message - line? surrounding toks?
-    throw ParseException({"No ending semi colon found!"});
+    throw ParseException("No ending semi colon found!");
   }
 }
 
@@ -214,7 +214,7 @@ std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream) {
   const Token &varName = tokStream.peek();
   tokStream.next();
   if (varName.type != TokenType::IDENTIFIER) {
-    throw ParseException({"Variable declaration not followed by identifier!"});
+    throw ParseException("Variable declaration not followed by identifier!");
   }
 
   switch (tokStream.peek().type) {
@@ -232,7 +232,7 @@ std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream) {
     }
   }
   default:
-    throw ParseException({"Invalid token following var decl!"});
+    throw ParseException("Invalid token following var decl!");
   }
 }
 

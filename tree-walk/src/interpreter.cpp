@@ -66,11 +66,11 @@ double getNum(const Literal &ltrl) {
   auto end = ltrl.value.data() + ltrl.value.size();
   auto [parseEnd, ec] = std::from_chars(start, end, val);
   if (ec == std::errc::result_out_of_range) {
-    throw InterpretException({"Number too large: " + std::string(ltrl.value)});
+    throw InterpretException("Number too large: " + std::string(ltrl.value));
   }
   if (parseEnd != end) {
-    throw InterpretException{
-        {"Unable to read number: " + std::string(ltrl.value)}};
+    throw InterpretException("Unable to read number: " +
+                             std::string(ltrl.value));
   }
   return val;
 }
@@ -129,8 +129,8 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
   case TokenType::LESS_EQUAL:
     return lhs <= rhs;
   default:
-    throw InterpretException{{"Unable to interpret binary op: " +
-                              tokenutils::tokenTypeToStr(bnry.op.type)}};
+    throw InterpretException("Unable to interpret binary op: " +
+                             tokenutils::tokenTypeToStr(bnry.op.type));
   }
 }
 
@@ -152,8 +152,8 @@ Value InterpreterVisitor::operator()(const Literal &ltrl) {
   case TokenType::NUL:
     return {};
   default:
-    throw InterpretException{
-        {"Unable to interpret type: " + tokenutils::tokenTypeToStr(ltrl.type)}};
+    throw InterpretException("Unable to interpret type: " +
+                             tokenutils::tokenTypeToStr(ltrl.type));
   }
 }
 
@@ -167,8 +167,8 @@ Value InterpreterVisitor::operator()(const Unary &unry) {
   case TokenType::BANG:
     return !std::visit(g_truther, right);
   default:
-    throw InterpretException{{"Unable to interpret unary op: " +
-                              tokenutils::tokenTypeToStr(unry.op.type)}};
+    throw InterpretException("Unable to interpret unary op: " +
+                             tokenutils::tokenTypeToStr(unry.op.type));
   }
 }
 
@@ -184,33 +184,33 @@ std::string AdditionVisitor::operator()(const std::string &l,
 }
 
 double AdditionVisitor::operator()(auto &&l, auto &&r) {
-  throw InterpretException{
-      {"Unable to add types: " + std::string(typeid(l).name()) + " and " +
-       std::string(typeid(r).name())}};
+  throw InterpretException(
+      "Unable to add types: " + std::string(typeid(l).name()) + " and " +
+      std::string(typeid(r).name()));
 }
 
 double SubtractionVisitor::operator()(double l, double r) { return l - r; }
 
 double SubtractionVisitor::operator()(auto &&l, auto &&r) {
-  throw InterpretException{
-      {"Unable to subtract types: " + std::string(typeid(l).name()) + " and " +
-       std::string(typeid(r).name())}};
+  throw InterpretException(
+      "Unable to subtract types: " + std::string(typeid(l).name()) + " and " +
+      std::string(typeid(r).name()));
 }
 
 double MultiplyVisitor::operator()(double l, double r) { return l * r; }
 
 double MultiplyVisitor::operator()(auto &&l, auto &&r) {
-  throw InterpretException{
-      {"Unable to multiply types: " + std::string(typeid(l).name()) + " and " +
-       std::string(typeid(r).name())}};
+  throw InterpretException(
+      "Unable to multiply types: " + std::string(typeid(l).name()) + " and " +
+      std::string(typeid(r).name()));
 }
 
 double DivideVisitor::operator()(double l, double r) { return l / r; }
 
 double DivideVisitor::operator()(auto &&l, auto &&r) {
-  throw InterpretException{
-      {"Unable to divide types: " + std::string(typeid(l).name()) + " and " +
-       std::string(typeid(r).name())}};
+  throw InterpretException(
+      "Unable to divide types: " + std::string(typeid(l).name()) + " and " +
+      std::string(typeid(r).name()));
 };
 
 bool TruthyVisitor::operator()(std::monostate) { return false; }
