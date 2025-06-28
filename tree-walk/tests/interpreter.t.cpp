@@ -33,14 +33,14 @@ TEST(Interpreter, smoke) {
 
   ASSERT_EQ("var myVar = ((group ((5/1)+2))*(-(-8)))",
             std::visit(stmt::PrinterVisitor{}, statements[0]));
-  Environment env;
+  auto env = std::make_shared<Environment>();
   std::vector<InterpretException> errs;
 
   // When
   interpret(statements, env, errs);
 
   // Then
-  auto val = env.get("myVar");
+  auto val = env->get("myVar");
   ASSERT_EQ(56.0, std::get<double>(val));
   ASSERT_EQ(0, errs.size());
 }
@@ -54,7 +54,7 @@ TEST(Interpreter, SmokeError) {
                    Token{TokenType::MINUS, "-", 0},
                    std::make_unique<Expr>(Literal{"true", TokenType::TRUE})})});
   std::vector<InterpretException> errs;
-  Environment env;
+  auto env = std::make_shared<Environment>();
 
   ASSERT_EQ("var myVar = (-true)",
             std::visit(stmt::PrinterVisitor{}, statements[0]));
@@ -63,7 +63,7 @@ TEST(Interpreter, SmokeError) {
   interpret(statements, env, errs);
 
   // Then
-  ASSERT_THROW(env.get("myVar"), InterpretException);
+  ASSERT_THROW(env->get("myVar"), InterpretException);
   ASSERT_EQ(1, errs.size());
 }
 
@@ -80,7 +80,7 @@ TEST(Interpreter, UseVar) {
                       Token{TokenType::STAR, "*", 1},
                       std::make_unique<Expr>(Variable{"a"})})});
   std::vector<InterpretException> errs;
-  Environment env;
+  auto env = std::make_shared<Environment>();
 
   ASSERT_EQ("var a = 3", std::visit(stmt::PrinterVisitor{}, statements[0]));
   ASSERT_EQ("var b = (2*(var a))",
@@ -90,7 +90,7 @@ TEST(Interpreter, UseVar) {
   interpret(statements, env, errs);
 
   // Then
-  auto b = env.get("b");
+  auto b = env->get("b");
   ASSERT_EQ(6, std::get<double>(b));
   ASSERT_EQ(0, errs.size());
 }
@@ -108,7 +108,7 @@ TEST(Interpreter, ReassignVar) {
                       Token{TokenType::STAR, "*", 1},
                       std::make_unique<Expr>(Variable{"a"})})})});
   std::vector<InterpretException> errs;
-  Environment env;
+  auto env = std::make_shared<Environment>();
 
   ASSERT_EQ("var a = 3", std::visit(stmt::PrinterVisitor{}, statements[0]));
   ASSERT_EQ("(a=(2*(var a)))",
@@ -118,7 +118,7 @@ TEST(Interpreter, ReassignVar) {
   interpret(statements, env, errs);
 
   // Then
-  auto a = env.get("a");
+  auto a = env->get("a");
   ASSERT_EQ(6, std::get<double>(a));
   ASSERT_EQ(0, errs.size());
 }

@@ -219,7 +219,6 @@ TEST(Parser, AssignToRVal) {
   // Given
   std::vector<ParseException> errs;
   // 2*3 = 2;
-  std::string expected = "((2*3)=2)";
   std::vector<Token> toks{
       {TokenType::NUMBER, "2", 0}, {TokenType::STAR, "*", 0},
       {TokenType::NUMBER, "3", 0}, {TokenType::EQUAL, "=", 0},
@@ -232,6 +231,25 @@ TEST(Parser, AssignToRVal) {
   // Then
   ASSERT_EQ(1, errs.size());
   ASSERT_THAT(errs[0].what(), ::HasSubstr("r-value"));
+  ASSERT_EQ(0, stmts.size());
+}
+
+TEST(Parser, BlockNotClosed) {
+  // Given
+  std::vector<ParseException> errs;
+  // { print(1);
+  std::vector<Token> toks{
+      {TokenType::LEFT_BRACE, "{", 0},  {TokenType::PRINT, "print", 0},
+      {TokenType::LEFT_PAREN, "(", 0},  {TokenType::NUMBER, "1", 0},
+      {TokenType::RIGHT_PAREN, ")", 0}, {TokenType::SEMICOLON, ";", 0},
+  };
+
+  // When
+  auto stmts = parse(toks, errs);
+
+  // Then
+  ASSERT_EQ(1, errs.size());
+  ASSERT_THAT(errs[0].what(), ::HasSubstr("closing brace"));
   ASSERT_EQ(0, stmts.size());
 }
 

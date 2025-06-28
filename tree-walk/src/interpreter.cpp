@@ -2,6 +2,7 @@
 
 #include <ast_printer.h>
 
+#include <cassert>
 #include <charconv>
 #include <iostream>
 
@@ -15,9 +16,12 @@ namespace {
 // Visitors are defined for each interpret operation.
 
 struct InterpreterVisitor {
-  InterpreterVisitor(Environment &env) : d_env(env){};
+  InterpreterVisitor(std::shared_ptr<Environment> &env) : d_env(env) {
+    assert(d_env);
+  };
 
   // Statements do not need to return anything
+  void operator()(const Block &blk);
   void operator()(const Expression &expr);
   void operator()(const Print &print);
   void operator()(const VarDecl &varDecl);
@@ -30,7 +34,7 @@ struct InterpreterVisitor {
   Value operator()(const Variable &var);
 
 private:
-  Environment &d_env;
+  std::shared_ptr<Environment> d_env;
 };
 
 struct AdditionVisitor {
@@ -66,13 +70,24 @@ double getNum(const Literal &ltrl) {
   auto end = ltrl.value.data() + ltrl.value.size();
   auto [parseEnd, ec] = std::from_chars(start, end, val);
   if (ec == std::errc::result_out_of_range) {
-    throw InterpretException({"Number too large: " + std::string(ltrl.value)});
+    throw InterpretException("Number too large: " + std::string(ltrl.value));
   }
   if (parseEnd != end) {
-    throw InterpretException{
-        {"Unable to read number: " + std::string(ltrl.value)}};
+    throw InterpretException("Unable to read number: " +
+                             std::string(ltrl.value));
   }
   return val;
+}
+
+void InterpreterVisitor::operator()(const Block &blk) {
+  // Create new scope
+  d_env = std::make_shared<Environment>(d_env);
+  // Run statements within block now new env is installed
+  for (auto &stmt : blk.stmts) {
+    std::visit(*this, *stmt);
+  }
+  // Restore previous scope
+  d_env = d_env->getParentScope();
 }
 
 void InterpreterVisitor::operator()(const Expression &expr) {
@@ -93,13 +108,13 @@ void InterpreterVisitor::operator()(const VarDecl &varDecl) {
   if (varDecl.expr) {
     val = std::visit(*this, *varDecl.expr);
   }
-  d_env.define(name, val);
+  d_env->define(name, val);
 }
 
 Value InterpreterVisitor::operator()(const Assign &assign) {
   auto name = std::string(assign.name);
   Value val = std::visit(*this, *assign.value);
-  d_env.assign(name, val);
+  d_env->assign(name, val);
   return val;
 }
 
@@ -129,8 +144,8 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
   case TokenType::LESS_EQUAL:
     return lhs <= rhs;
   default:
-    throw InterpretException{{"Unable to interpret binary op: " +
-                              tokenutils::tokenTypeToStr(bnry.op.type)}};
+    throw InterpretException("Unable to interpret binary op: " +
+                             tokenutils::tokenTypeToStr(bnry.op.type));
   }
 }
 
@@ -152,8 +167,8 @@ Value InterpreterVisitor::operator()(const Literal &ltrl) {
   case TokenType::NUL:
     return {};
   default:
-    throw InterpretException{
-        {"Unable to interpret type: " + tokenutils::tokenTypeToStr(ltrl.type)}};
+    throw InterpretException("Unable to interpret type: " +
+                             tokenutils::tokenTypeToStr(ltrl.type));
   }
 }
 
@@ -167,13 +182,13 @@ Value InterpreterVisitor::operator()(const Unary &unry) {
   case TokenType::BANG:
     return !std::visit(g_truther, right);
   default:
-    throw InterpretException{{"Unable to interpret unary op: " +
-                              tokenutils::tokenTypeToStr(unry.op.type)}};
+    throw InterpretException("Unable to interpret unary op: " +
+                             tokenutils::tokenTypeToStr(unry.op.type));
   }
 }
 
 Value InterpreterVisitor::operator()(const Variable &var) {
-  return d_env.get(std::string(var.name));
+  return d_env->get(std::string(var.name));
 }
 
 double AdditionVisitor::operator()(double l, double r) { return l + r; }
@@ -184,33 +199,33 @@ std::string AdditionVisitor::operator()(const std::string &l,
 }
 
 double AdditionVisitor::operator()(auto &&l, auto &&r) {
-  throw InterpretException{
-      {"Unable to add types: " + std::string(typeid(l).name()) + " and " +
-       std::string(typeid(r).name())}};
+  throw InterpretException(
+      "Unable to add types: " + std::string(typeid(l).name()) + " and " +
+      std::string(typeid(r).name()));
 }
 
 double SubtractionVisitor::operator()(double l, double r) { return l - r; }
 
 double SubtractionVisitor::operator()(auto &&l, auto &&r) {
-  throw InterpretException{
-      {"Unable to subtract types: " + std::string(typeid(l).name()) + " and " +
-       std::string(typeid(r).name())}};
+  throw InterpretException(
+      "Unable to subtract types: " + std::string(typeid(l).name()) + " and " +
+      std::string(typeid(r).name()));
 }
 
 double MultiplyVisitor::operator()(double l, double r) { return l * r; }
 
 double MultiplyVisitor::operator()(auto &&l, auto &&r) {
-  throw InterpretException{
-      {"Unable to multiply types: " + std::string(typeid(l).name()) + " and " +
-       std::string(typeid(r).name())}};
+  throw InterpretException(
+      "Unable to multiply types: " + std::string(typeid(l).name()) + " and " +
+      std::string(typeid(r).name()));
 }
 
 double DivideVisitor::operator()(double l, double r) { return l / r; }
 
 double DivideVisitor::operator()(auto &&l, auto &&r) {
-  throw InterpretException{
-      {"Unable to divide types: " + std::string(typeid(l).name()) + " and " +
-       std::string(typeid(r).name())}};
+  throw InterpretException(
+      "Unable to divide types: " + std::string(typeid(l).name()) + " and " +
+      std::string(typeid(r).name()));
 };
 
 bool TruthyVisitor::operator()(std::monostate) { return false; }
@@ -221,7 +236,8 @@ bool TruthyVisitor::operator()(auto &&) { return true; }
 
 } // namespace
 
-void interpret(const std::vector<stmt::Stmt> &stmts, Environment &env,
+void interpret(const std::vector<stmt::Stmt> &stmts,
+               std::shared_ptr<Environment> &env,
                std::vector<InterpretException> &errs) {
   try {
     InterpreterVisitor v{env};
