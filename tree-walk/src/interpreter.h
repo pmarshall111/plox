@@ -10,7 +10,8 @@
 namespace plox {
 namespace treewalk {
 
-void interpret(const std::vector<stmt::Stmt> &stmts, Environment &env,
+void interpret(const std::vector<stmt::Stmt> &stmts,
+               std::shared_ptr<Environment> &env,
                std::vector<InterpretException> &errs);
 
 } // namespace treewalk

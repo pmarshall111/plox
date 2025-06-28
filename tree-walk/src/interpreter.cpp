@@ -2,6 +2,7 @@
 
 #include <ast_printer.h>
 
+#include <cassert>
 #include <charconv>
 #include <iostream>
 
@@ -15,7 +16,9 @@ namespace {
 // Visitors are defined for each interpret operation.
 
 struct InterpreterVisitor {
-  InterpreterVisitor(Environment &env) : d_env(env){};
+  InterpreterVisitor(std::shared_ptr<Environment> &env) : d_env(env) {
+    assert(d_env);
+  };
 
   // Statements do not need to return anything
   void operator()(const Expression &expr);
@@ -30,7 +33,7 @@ struct InterpreterVisitor {
   Value operator()(const Variable &var);
 
 private:
-  Environment &d_env;
+  std::shared_ptr<Environment> d_env;
 };
 
 struct AdditionVisitor {
@@ -93,13 +96,13 @@ void InterpreterVisitor::operator()(const VarDecl &varDecl) {
   if (varDecl.expr) {
     val = std::visit(*this, *varDecl.expr);
   }
-  d_env.define(name, val);
+  d_env->define(name, val);
 }
 
 Value InterpreterVisitor::operator()(const Assign &assign) {
   auto name = std::string(assign.name);
   Value val = std::visit(*this, *assign.value);
-  d_env.assign(name, val);
+  d_env->assign(name, val);
   return val;
 }
 
@@ -173,7 +176,7 @@ Value InterpreterVisitor::operator()(const Unary &unry) {
 }
 
 Value InterpreterVisitor::operator()(const Variable &var) {
-  return d_env.get(std::string(var.name));
+  return d_env->get(std::string(var.name));
 }
 
 double AdditionVisitor::operator()(double l, double r) { return l + r; }
@@ -221,7 +224,8 @@ bool TruthyVisitor::operator()(auto &&) { return true; }
 
 } // namespace
 
-void interpret(const std::vector<stmt::Stmt> &stmts, Environment &env,
+void interpret(const std::vector<stmt::Stmt> &stmts,
+               std::shared_ptr<Environment> &env,
                std::vector<InterpretException> &errs) {
   try {
     InterpreterVisitor v{env};

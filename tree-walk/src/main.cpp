@@ -12,7 +12,7 @@ namespace plox {
 namespace treewalk {
 
 namespace {
-Environment s_globals;
+auto s_globals = std::make_shared<Environment>();
 }
 
 int run(const std::string &buff) {
