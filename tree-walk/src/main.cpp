@@ -68,6 +68,17 @@ int runFile(const std::string &script) {
   return rc;
 }
 
+int runCmds(const std::string &cmds) {
+  int rc = 0;
+  try {
+    rc = run(cmds);
+  } catch (const std::exception &ex) {
+    // TODO: error handling. Print?
+    return 65;
+  }
+  return rc;
+}
+
 int runRepl() {
   while (true) {
     std::string userInput;
@@ -87,8 +98,17 @@ int runRepl() {
 int main(int argc, char **argv) {
   // Setup CLI
   CLI::App app{"Lox - Tree walk Implementation"};
+
   std::optional<std::string> script;
-  app.add_option("script", script, "A path to a lox script");
+  auto script_option =
+      app.add_option("-s,--script", script, "A path to a lox script");
+  std::optional<std::string> commands;
+  auto cmds_option = app.add_option("-c,--commands", commands, "Lox commands");
+
+  // Allow script *or* command to be passed in - not both
+  script_option->excludes(cmds_option);
+  cmds_option->excludes(script_option);
+
   CLI11_PARSE(app, argc, argv);
 
   // Route to desired behaviour
@@ -96,6 +116,8 @@ int main(int argc, char **argv) {
   int rc = 0;
   if (script) {
     rc = runFile(script.value());
+  } else if (commands) {
+    rc = runCmds(commands.value());
   } else {
     rc = runRepl();
   }
