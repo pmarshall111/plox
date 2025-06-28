@@ -2,13 +2,15 @@
 
 // program        → statement* EOF ;
 //
-// statement      → exprStmt
+// statement      → blockStmt
+//                | exprStmt
 //                | printStmt
 //                | varStmt ;
 //
-// varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
+// blockStmt      → "{" statement* "}" ;
 // exprStmt       → expression ";" ;
 // printStmt      → "print" expression ";" ;
+// varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
 // expression     → assignment ;
 // assignment     → IDENTIFIER "=" assignment | equality ;
@@ -57,6 +59,7 @@ private:
 };
 
 std::unique_ptr<ast::Expr> expression(TokenStream &tokStream);
+std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream);
 
 std::unique_ptr<ast::Expr> primary(TokenStream &tokStream) {
   const Token &tok = tokStream.peek();
@@ -184,6 +187,20 @@ std::unique_ptr<ast::Expr> expression(TokenStream &tokStream) {
   return assignment(tokStream);
 }
 
+std::unique_ptr<stmt::Stmt> blockStatement(TokenStream &tokStream) {
+  auto blk = std::make_unique<stmt::Stmt>(stmt::Block());
+  while (tokStream.hasNext()) {
+    if (TokenType::RIGHT_BRACE == tokStream.peek().type) {
+      tokStream.next();
+      return blk;
+    }
+    std::get<stmt::Block>(*blk).stmts.push_back(
+        std::move(statement(tokStream)));
+  }
+
+  throw ParseException("Reached end of file without closing brace.");
+}
+
 std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
   std::unique_ptr<ast::Expr> expr = expression(tokStream);
   switch (tokStream.peek().type) {
@@ -238,6 +255,10 @@ std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream) {
 
 std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
   switch (tokStream.peek().type) {
+  case TokenType::LEFT_BRACE: {
+    tokStream.next();
+    return blockStatement(tokStream);
+  }
   case TokenType::PRINT: {
     tokStream.next();
     return printStatement(tokStream);

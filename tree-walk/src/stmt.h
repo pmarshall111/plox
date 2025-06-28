@@ -13,13 +13,19 @@ namespace plox {
 namespace treewalk {
 namespace stmt {
 
+struct Block;
+
 struct Expression;
 
 struct Print;
 
 struct VarDecl;
 
-using Stmt = std::variant<Expression, Print, VarDecl>;
+using Stmt = std::variant<Block, Expression, Print, VarDecl>;
+
+struct Block {
+  std::vector<std::unique_ptr<stmt::Stmt>> stmts;
+};
 
 struct Expression {
   std::unique_ptr<ast::Expr> expr;

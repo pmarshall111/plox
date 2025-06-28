@@ -10,6 +10,16 @@ namespace {
 ast::PrinterVisitor g_astPrinterVisitor;
 }
 
+std::string PrinterVisitor::operator()(const Block &blk) {
+  std::ostringstream ss;
+  ss << "{";
+  for (const auto &stmt : blk.stmts) {
+    ss << std::visit(*this, *stmt) << ";";
+  }
+  ss << "}";
+  return ss.str();
+}
+
 std::string PrinterVisitor::operator()(const Expression &expr) {
   return std::visit(g_astPrinterVisitor, *expr.expr);
 }

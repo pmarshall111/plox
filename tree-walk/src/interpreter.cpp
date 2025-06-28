@@ -21,6 +21,7 @@ struct InterpreterVisitor {
   };
 
   // Statements do not need to return anything
+  void operator()(const Block &blk);
   void operator()(const Expression &expr);
   void operator()(const Print &print);
   void operator()(const VarDecl &varDecl);
@@ -76,6 +77,17 @@ double getNum(const Literal &ltrl) {
                              std::string(ltrl.value));
   }
   return val;
+}
+
+void InterpreterVisitor::operator()(const Block &blk) {
+  // Create new scope
+  d_env = std::make_shared<Environment>(d_env);
+  // Run statements within block now new env is installed
+  for (auto &stmt : blk.stmts) {
+    std::visit(*this, *stmt);
+  }
+  // Restore previous scope
+  d_env = d_env->getParentScope();
 }
 
 void InterpreterVisitor::operator()(const Expression &expr) {
