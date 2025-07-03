@@ -23,6 +23,7 @@ enum class TokenType {
   SEMICOLON,
   SLASH,
   STAR,
+  EOF_,
 
   // 1 or 2 char tokens
   BANG,

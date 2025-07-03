@@ -104,7 +104,7 @@ std::vector<Token> scanTokens(const std::string_view code,
                               std::vector<SyntaxException> &errs) {
   std::vector<Token> tokens;
 
-  int line = 0;
+  int line = 1;
   for (int pos = 0; pos < code.size(); pos++) {
     const char &c = code.at(pos);
 
@@ -206,6 +206,7 @@ std::vector<Token> scanTokens(const std::string_view code,
     }
   }
 
+  tokens.emplace_back(TokenType::EOF_, "", line);
   return tokens;
 }
 

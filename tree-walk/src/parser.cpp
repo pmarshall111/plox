@@ -191,6 +191,7 @@ std::unique_ptr<ast::Expr> expression(TokenStream &tokStream) {
 }
 
 std::unique_ptr<stmt::Stmt> blockStatement(TokenStream &tokStream) {
+  int blockStart = tokStream.peek().line;
   auto blk = std::make_unique<stmt::Stmt>(stmt::Block());
   while (tokStream.hasNext()) {
     if (TokenType::RIGHT_BRACE == tokStream.peek().type) {
@@ -201,8 +202,7 @@ std::unique_ptr<stmt::Stmt> blockStatement(TokenStream &tokStream) {
         std::move(statement(tokStream)));
   }
 
-  throw ParseException("Reached end of file without closing brace.",
-                       tokStream.peek().line);
+  throw ParseException("Block has no closing brace.", blockStart);
 }
 
 std::unique_ptr<stmt::Stmt> exprStatement(TokenStream &tokStream) {
