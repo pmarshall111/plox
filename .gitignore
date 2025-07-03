@@ -4,3 +4,4 @@ build-asan
 vcpkg_installed
 *TODO.txt
 __pycache__
+private/
