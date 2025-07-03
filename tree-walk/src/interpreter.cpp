@@ -22,8 +22,8 @@ struct InterpreterVisitor {
 
   // Statements do not need to return anything
   void operator()(const Block &blk);
-  void operator()(const If &ifStmt);
   void operator()(const Expression &expr);
+  void operator()(const If &ifStmt);
   void operator()(const Print &print);
   void operator()(const VarDecl &varDecl);
   void operator()(const While &whileStmt);
@@ -93,6 +93,10 @@ void InterpreterVisitor::operator()(const Block &blk) {
   d_env = d_env->getParentScope();
 }
 
+void InterpreterVisitor::operator()(const Expression &expr) {
+  std::visit(*this, *expr.expr);
+}
+
 void InterpreterVisitor::operator()(const If &ifStmt) {
   Value evaluatedCondition = std::visit(*this, *ifStmt.condition);
   bool isTruthy = std::visit(g_truther, evaluatedCondition);
@@ -101,10 +105,6 @@ void InterpreterVisitor::operator()(const If &ifStmt) {
   } else if (ifStmt.elseBranch) {
     std::visit(*this, *ifStmt.elseBranch);
   }
-}
-
-void InterpreterVisitor::operator()(const Expression &expr) {
-  std::visit(*this, *expr.expr);
 }
 
 void InterpreterVisitor::operator()(const Print &print) {

@@ -3,15 +3,15 @@
 // program        → statement* EOF ;
 //
 // statement      → blockStmt
-//                | ifStmt
 //                | exprStmt
+//                | ifStmt
 //                | printStmt
 //                | varStmt
 //                | whileStmt ;
 //
 // blockStmt      → "{" statement* "}" ;
-// ifStmt         → "if" "(" expression ")" statement ("else" statement)? ";" ;
 // exprStmt       → expression ";" ;
+// ifStmt         → "if" "(" expression ")" statement ("else" statement)? ";" ;
 // printStmt      → "print" expression ";" ;
 // varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
 // whileStmt      → "while" "(" expression ")" statement ";" ;
