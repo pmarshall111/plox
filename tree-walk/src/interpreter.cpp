@@ -26,6 +26,7 @@ struct InterpreterVisitor {
   void operator()(const Expression &expr);
   void operator()(const Print &print);
   void operator()(const VarDecl &varDecl);
+  void operator()(const While &whileStmt);
   // Other operations called by statements return Values
   Value operator()(const Assign &assign);
   Value operator()(const Binary &bin);
@@ -121,6 +122,12 @@ void InterpreterVisitor::operator()(const VarDecl &varDecl) {
     val = std::visit(*this, *varDecl.expr);
   }
   d_env->define(name, val);
+}
+
+void InterpreterVisitor::operator()(const While &whileStmt) {
+  while (std::visit(g_truther, std::visit(*this, *whileStmt.condition))) {
+    std::visit(*this, *whileStmt.body);
+  }
 }
 
 Value InterpreterVisitor::operator()(const Assign &assign) {

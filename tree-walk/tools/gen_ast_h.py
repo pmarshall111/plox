@@ -121,6 +121,7 @@ if __name__ == "__main__":
         {"name": "If", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "condition"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "ifBranch"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "elseBranch"}]},
         {"name": "Expression", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]},
         {"name": "Print", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]},
-        {"name": "VarDecl", "members": [{"type": "std::string_view", "name": "name"}, {"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]} 
+        {"name": "VarDecl", "members": [{"type": "std::string_view", "name": "name"}, {"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]},
+        {"name": "While", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "condition"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "body"}]},
     ])
     # fmt: on
