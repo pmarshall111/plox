@@ -15,14 +15,12 @@ public:
 
 class ParseException : public std::runtime_error {
 public:
-  explicit ParseException(const std::string &msg) : std::runtime_error(msg){};
+  explicit ParseException(const std::string &msg, int line);
 };
 
 class SyntaxException : public std::runtime_error {
 public:
-  static std::string formatMsg(const std::string &msg, int line);
-  explicit SyntaxException(const std::string &msg, int line)
-      : std::runtime_error(formatMsg(msg, line)){};
+  explicit SyntaxException(const std::string &msg, int line);
 };
 
 std::ostream &operator<<(std::ostream &os, const std::runtime_error &err);

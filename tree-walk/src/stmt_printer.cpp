@@ -20,6 +20,16 @@ std::string PrinterVisitor::operator()(const Block &blk) {
   return ss.str();
 }
 
+std::string PrinterVisitor::operator()(const If &ifStmt) {
+  std::ostringstream ss;
+  ss << "if" << "(" << std::visit(g_astPrinterVisitor, *ifStmt.condition) << ")"
+     << "(" << std::visit(*this, *ifStmt.ifBranch) << ")";
+  if (ifStmt.elseBranch) {
+    ss << "else" << "(" << std::visit(*this, *ifStmt.elseBranch) << ")";
+  }
+  return ss.str();
+}
+
 std::string PrinterVisitor::operator()(const Expression &expr) {
   return std::visit(g_astPrinterVisitor, *expr.expr);
 }

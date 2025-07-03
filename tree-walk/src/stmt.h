@@ -15,16 +15,24 @@ namespace stmt {
 
 struct Block;
 
+struct If;
+
 struct Expression;
 
 struct Print;
 
 struct VarDecl;
 
-using Stmt = std::variant<Block, Expression, Print, VarDecl>;
+using Stmt = std::variant<Block, If, Expression, Print, VarDecl>;
 
 struct Block {
   std::vector<std::unique_ptr<stmt::Stmt>> stmts;
+};
+
+struct If {
+  std::unique_ptr<ast::Expr> condition;
+  std::unique_ptr<stmt::Stmt> ifBranch;
+  std::unique_ptr<stmt::Stmt> elseBranch;
 };
 
 struct Expression {

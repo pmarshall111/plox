@@ -11,8 +11,9 @@ TEST(Scanner, Assignment) {
   std::vector<SyntaxException> errors;
   std::string code = R"(var a = "hi")";
   std::vector<Token> expected{
-      Token{TokenType::VAR, "var", 0}, Token{TokenType::IDENTIFIER, "a", 0},
-      Token{TokenType::EQUAL, "=", 0}, Token{TokenType::STRING, "hi", 0}};
+      Token{TokenType::VAR, "var", 1}, Token{TokenType::IDENTIFIER, "a", 1},
+      Token{TokenType::EQUAL, "=", 1}, Token{TokenType::STRING, "hi", 1},
+      Token{TokenType::EOF_, "", 1}};
 
   // When
   auto vec = scanTokens(code, errors);
@@ -38,9 +39,9 @@ TEST(Scanner, Addition) {
   // Given
   std::vector<SyntaxException> errors;
   std::string code = "1+2";
-  std::vector<Token> expected{Token{TokenType::NUMBER, "1", 0},
-                              Token{TokenType::PLUS, "+", 0},
-                              Token{TokenType::NUMBER, "2", 0}};
+  std::vector<Token> expected{
+      Token{TokenType::NUMBER, "1", 1}, Token{TokenType::PLUS, "+", 1},
+      Token{TokenType::NUMBER, "2", 1}, Token{TokenType::EOF_, "", 1}};
 
   // When
   auto vec = scanTokens(code, errors);
@@ -55,8 +56,9 @@ TEST(Scanner, NoSpaces) {
   std::vector<SyntaxException> errors;
   std::string code = "var B=1";
   std::vector<Token> expected{
-      Token{TokenType::VAR, "var", 0}, Token{TokenType::IDENTIFIER, "B", 0},
-      Token{TokenType::EQUAL, "=", 0}, Token{TokenType::NUMBER, "1", 0}};
+      Token{TokenType::VAR, "var", 1}, Token{TokenType::IDENTIFIER, "B", 1},
+      Token{TokenType::EQUAL, "=", 1}, Token{TokenType::NUMBER, "1", 1},
+      Token{TokenType::EOF_, "", 1}};
 
   // When
   auto vec = scanTokens(code, errors);
@@ -70,9 +72,9 @@ TEST(Scanner, Print) {
   // Given
   std::vector<SyntaxException> errors;
   std::string code = "print 1;";
-  std::vector<Token> expected{Token{TokenType::PRINT, "print", 0},
-                              Token{TokenType::NUMBER, "1", 0},
-                              Token{TokenType::SEMICOLON, ";", 0}};
+  std::vector<Token> expected{
+      Token{TokenType::PRINT, "print", 1}, Token{TokenType::NUMBER, "1", 1},
+      Token{TokenType::SEMICOLON, ";", 1}, Token{TokenType::EOF_, "", 1}};
 
   // When
   auto vec = scanTokens(code, errors);

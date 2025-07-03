@@ -3,11 +3,13 @@
 // program        → statement* EOF ;
 //
 // statement      → blockStmt
+//                | ifStmt
 //                | exprStmt
 //                | printStmt
 //                | varStmt ;
 //
 // blockStmt      → "{" statement* "}" ;
+// ifStmt         → "if" "("" expression ")" statement ("else" statement)? ;
 // exprStmt       → expression ";" ;
 // printStmt      → "print" expression ";" ;
 // varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
@@ -36,19 +38,22 @@ public:
 
   const Token &peek() const {
     if (d_pos >= d_toks.size()) {
-      throw ParseException("Incomplete statement - expected more tokens!");
+      throw ParseException("Incomplete statement - expected more tokens!",
+                           d_toks[d_pos - 1].line);
     }
     return d_toks[d_pos];
   };
   void next() { d_pos++; };
   bool hasNext() { return d_pos < d_toks.size() - 1; }
-  void skipPastSemiColon() {
-    while (hasNext() && d_toks[d_pos].type != TokenType::SEMICOLON) {
-      // Keep on iterating until non semi-colon or end of arr
+  void skipPastSemiColons() {
+    while (hasNext() && peek().type != TokenType::SEMICOLON) {
+      // Keep on iterating until the first semi-colon
       next();
     }
-    if (hasNext()) {
-      // Current char is a semi-colon. Continue to next char
+
+    while (hasNext() && peek().type == TokenType::SEMICOLON) {
+      // Current char is a semi-colon. Continue until the next char is not a
+      // semi-colon
       next();
     }
   }
@@ -84,10 +89,10 @@ std::unique_ptr<ast::Expr> primary(TokenStream &tokStream) {
       tokStream.next();
       return grp;
     }
-    throw ParseException("No closing paren found!");
+    throw ParseException("No closing paren found!", tokStream.peek().line);
   }
   default:
-    throw ParseException("Unknown token!");
+    throw ParseException("Unknown token!", tokStream.peek().line);
   }
 }
 
@@ -172,7 +177,7 @@ std::unique_ptr<ast::Expr> assignment(TokenStream &tokStream) {
   if (TokenType::EQUAL == tokStream.peek().type) {
     tokStream.next();
     if (!std::holds_alternative<ast::Variable>(*exp)) {
-      throw ParseException("Cannot assign to r-value");
+      throw ParseException("Cannot assign to r-value", tokStream.peek().line);
     }
 
     std::string_view name = std::get<ast::Variable>(*exp).name;
@@ -188,6 +193,7 @@ std::unique_ptr<ast::Expr> expression(TokenStream &tokStream) {
 }
 
 std::unique_ptr<stmt::Stmt> blockStatement(TokenStream &tokStream) {
+  int blockStart = tokStream.peek().line;
   auto blk = std::make_unique<stmt::Stmt>(stmt::Block());
   while (tokStream.hasNext()) {
     if (TokenType::RIGHT_BRACE == tokStream.peek().type) {
@@ -198,20 +204,7 @@ std::unique_ptr<stmt::Stmt> blockStatement(TokenStream &tokStream) {
         std::move(statement(tokStream)));
   }
 
-  throw ParseException("Reached end of file without closing brace.");
-}
-
-std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
-  std::unique_ptr<ast::Expr> expr = expression(tokStream);
-  switch (tokStream.peek().type) {
-  case TokenType::SEMICOLON: {
-    tokStream.next();
-    return std::make_unique<stmt::Stmt>(stmt::Print{std::move(expr)});
-  }
-  default:
-    // TODO: make better error message - line? surrounding toks?
-    throw ParseException("No ending semi colon found!");
-  }
+  throw ParseException("Block has no closing brace.", blockStart);
 }
 
 std::unique_ptr<stmt::Stmt> exprStatement(TokenStream &tokStream) {
@@ -223,7 +216,55 @@ std::unique_ptr<stmt::Stmt> exprStatement(TokenStream &tokStream) {
   }
   default:
     // TODO: make better error message - line? surrounding toks?
-    throw ParseException("No ending semi colon found!");
+    throw ParseException("No ending semi colon found!", tokStream.peek().line);
+  }
+}
+
+std::unique_ptr<stmt::Stmt> ifStatement(TokenStream &tokStream) {
+  if (TokenType::LEFT_PAREN != tokStream.peek().type) {
+    throw ParseException("If conditions need to be surrounded by parentheses! "
+                         "No opening paren found.",
+                         tokStream.peek().line);
+  }
+  tokStream.next();
+
+  // Read condition
+  auto ifStmt = std::make_unique<stmt::Stmt>(stmt::If());
+  std::get<stmt::If>(*ifStmt).condition = expression(tokStream);
+  if (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+    throw ParseException("If conditions need to be surrounded by parentheses! "
+                         "No closing paren found.",
+                         tokStream.peek().line);
+  }
+  tokStream.next();
+
+  // Read if branch
+  std::get<stmt::If>(*ifStmt).ifBranch = statement(tokStream);
+
+  // Read optional else branch
+  if (TokenType::ELSE == tokStream.peek().type) {
+    tokStream.next();
+    std::get<stmt::If>(*ifStmt).elseBranch = statement(tokStream);
+  }
+
+  if (TokenType::SEMICOLON == tokStream.peek().type) {
+    tokStream.next();
+    return ifStmt;
+  }
+  throw ParseException("No ending semi colon found for if stmt!",
+                       tokStream.peek().line);
+}
+
+std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
+  std::unique_ptr<ast::Expr> expr = expression(tokStream);
+  switch (tokStream.peek().type) {
+  case TokenType::SEMICOLON: {
+    tokStream.next();
+    return std::make_unique<stmt::Stmt>(stmt::Print{std::move(expr)});
+  }
+  default:
+    // TODO: make better error message - line? surrounding toks?
+    throw ParseException("No ending semi colon found!", tokStream.peek().line);
   }
 }
 
@@ -231,7 +272,8 @@ std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream) {
   const Token &varName = tokStream.peek();
   tokStream.next();
   if (varName.type != TokenType::IDENTIFIER) {
-    throw ParseException("Variable declaration not followed by identifier!");
+    throw ParseException("Variable declaration not followed by identifier!",
+                         tokStream.peek().line);
   }
 
   switch (tokStream.peek().type) {
@@ -249,7 +291,8 @@ std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream) {
     }
   }
   default:
-    throw ParseException("Invalid token following var decl!");
+    throw ParseException("Invalid token following var decl!",
+                         tokStream.peek().line);
   }
 }
 
@@ -258,6 +301,10 @@ std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
   case TokenType::LEFT_BRACE: {
     tokStream.next();
     return blockStatement(tokStream);
+  }
+  case TokenType::IF: {
+    tokStream.next();
+    return ifStatement(tokStream);
   }
   case TokenType::PRINT: {
     tokStream.next();
@@ -287,7 +334,7 @@ std::vector<stmt::Stmt> parse(const std::vector<Token> &tokens,
       // Error while parsing this statement. Continue parsing the next statement
       // so the user knows all errors in their code.
       errs.push_back(e);
-      tokStream.skipPastSemiColon();
+      tokStream.skipPastSemiColons();
     }
   }
   return statements;
