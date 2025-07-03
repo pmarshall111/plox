@@ -1,4 +1,4 @@
-def test_block(lox_runner):
+def test_while(lox_runner):
     # GIVEN
     code = """
     var a = 15;

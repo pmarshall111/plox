@@ -20,6 +20,24 @@ std::string PrinterVisitor::operator()(const Block &blk) {
   return ss.str();
 }
 
+std::string PrinterVisitor::operator()(const For &forStmt) {
+  std::ostringstream ss;
+  ss << "for" << "(";
+  if (forStmt.initialiser) {
+    ss << std::visit(*this, *forStmt.initialiser);
+  }
+  ss << ";";
+  if (forStmt.condition) {
+    ss << std::visit(g_astPrinterVisitor, *forStmt.condition);
+  }
+  ss << ";";
+  if (forStmt.incrementer) {
+    ss << std::visit(g_astPrinterVisitor, *forStmt.incrementer);
+  }
+  ss << ")" << std::visit(*this, *forStmt.body);
+  return ss.str();
+}
+
 std::string PrinterVisitor::operator()(const If &ifStmt) {
   std::ostringstream ss;
   ss << "if" << "(" << std::visit(g_astPrinterVisitor, *ifStmt.condition) << ")"
