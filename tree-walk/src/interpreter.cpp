@@ -23,6 +23,7 @@ struct InterpreterVisitor {
   // Statements do not need to return anything
   void operator()(const Block &blk);
   void operator()(const Expression &expr);
+  void operator()(const For &forStmt);
   void operator()(const If &ifStmt);
   void operator()(const Print &print);
   void operator()(const VarDecl &varDecl);
@@ -91,6 +92,28 @@ void InterpreterVisitor::operator()(const Block &blk) {
   }
   // Restore previous scope
   d_env = d_env->getParentScope();
+}
+
+void InterpreterVisitor::operator()(const For &forStmt) {
+  if (forStmt.initialiser) {
+    std::visit(*this, *forStmt.initialiser);
+  }
+
+  auto condition = [&]() {
+    if (forStmt.condition) {
+      return std::visit(g_truther, std::visit(*this, *forStmt.condition));
+    }
+    // It's possible to have no condition - in that case the loop should run
+    // forever
+    return true;
+  };
+
+  while (condition()) {
+    std::visit(*this, *forStmt.body);
+    if (forStmt.incrementer) {
+      std::visit(*this, *forStmt.incrementer);
+    }
+  }
 }
 
 void InterpreterVisitor::operator()(const Expression &expr) {

@@ -1,5 +1,7 @@
 #include <parser.h>
 
+// clang-format off
+
 // program        → statement* EOF ;
 //
 // statement      → blockStmt
@@ -11,6 +13,7 @@
 //
 // blockStmt      → "{" statement* "}" ;
 // exprStmt       → expression ";" ;
+// forStmt         → "for" "(" (varStmt | exprStmt | ";") expression? ";" expression? ")" statement ";" ;
 // ifStmt         → "if" "(" expression ")" statement ("else" statement)? ";" ;
 // printStmt      → "print" expression ";" ;
 // varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
@@ -27,7 +30,7 @@
 // primary        → NUMBER | STRING | "true" | "false" | "nil"
 //                | "(" expression ")" | IDENTIFIER;
 
-// Recursive descent parsing starts at the rule of lowest precedence. TODO: why
+// clang-format on
 
 namespace plox {
 namespace treewalk {
@@ -222,6 +225,53 @@ std::unique_ptr<stmt::Stmt> exprStatement(TokenStream &tokStream) {
   }
 }
 
+std::unique_ptr<stmt::Stmt> forStatement(TokenStream &tokStream) {
+  if (TokenType::LEFT_PAREN != tokStream.peek().type) {
+    throw ParseException("For needs to be followed by an opening paren.",
+                         tokStream.peek().line);
+  }
+  tokStream.next();
+  auto forStmt = std::make_unique<stmt::Stmt>(stmt::For());
+
+  // Read initialiser
+  if (TokenType::SEMICOLON != tokStream.peek().type) {
+    std::get<stmt::For>(*forStmt).initialiser = statement(tokStream);
+  } else {
+    tokStream.next();
+  }
+
+  // Read condition
+  if (TokenType::SEMICOLON != tokStream.peek().type) {
+    std::get<stmt::For>(*forStmt).condition = expression(tokStream);
+  }
+  if (TokenType::SEMICOLON != tokStream.peek().type) {
+    throw ParseException("Expected semi-colon after for loop condition.",
+                         tokStream.peek().line);
+  }
+  tokStream.next();
+
+  // Read incrementer
+  if (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+    std::get<stmt::For>(*forStmt).incrementer = expression(tokStream);
+  }
+  if (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+    throw ParseException(
+        "Expected for loop specifiers to be closed with parenthesis",
+        tokStream.peek().line);
+  }
+  tokStream.next();
+
+  // Read body
+  std::get<stmt::For>(*forStmt).body = statement(tokStream);
+
+  if (TokenType::SEMICOLON == tokStream.peek().type) {
+    tokStream.next();
+    return forStmt;
+  }
+  throw ParseException("No ending semi colon found for 'for' stmt!",
+                       tokStream.peek().line);
+}
+
 std::unique_ptr<stmt::Stmt> ifStatement(TokenStream &tokStream) {
   if (TokenType::LEFT_PAREN != tokStream.peek().type) {
     throw ParseException("If conditions need to be surrounded by parentheses! "
@@ -334,6 +384,10 @@ std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
   case TokenType::LEFT_BRACE: {
     tokStream.next();
     return blockStatement(tokStream);
+  }
+  case TokenType::FOR: {
+    tokStream.next();
+    return forStatement(tokStream);
   }
   case TokenType::IF: {
     tokStream.next();
