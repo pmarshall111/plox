@@ -45,13 +45,15 @@ public:
   };
   void next() { d_pos++; };
   bool hasNext() { return d_pos < d_toks.size() - 1; }
-  void skipPastSemiColon() {
-    while (hasNext() && d_toks[d_pos].type != TokenType::SEMICOLON) {
-      // Keep on iterating until non semi-colon or end of arr
+  void skipPastSemiColons() {
+    while (hasNext() && peek().type != TokenType::SEMICOLON) {
+      // Keep on iterating until the first semi-colon
       next();
     }
-    if (hasNext()) {
-      // Current char is a semi-colon. Continue to next char
+
+    while (hasNext() && peek().type == TokenType::SEMICOLON) {
+      // Current char is a semi-colon. Continue until the next char is not a
+      // semi-colon
       next();
     }
   }
@@ -332,7 +334,7 @@ std::vector<stmt::Stmt> parse(const std::vector<Token> &tokens,
       // Error while parsing this statement. Continue parsing the next statement
       // so the user knows all errors in their code.
       errs.push_back(e);
-      tokStream.skipPastSemiColon();
+      tokStream.skipPastSemiColons();
     }
   }
   return statements;
