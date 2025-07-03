@@ -9,7 +9,7 @@
 //                | varStmt ;
 //
 // blockStmt      → "{" statement* "}" ;
-// ifStmt         → "if" "("" expression ")" statement ("else" statement)? ;
+// ifStmt         → "if" "(" expression ")" statement ("else" statement)? ";" ;
 // exprStmt       → expression ";" ;
 // printStmt      → "print" expression ";" ;
 // varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
