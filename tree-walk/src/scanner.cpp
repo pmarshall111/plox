@@ -151,7 +151,7 @@ std::vector<Token> scanTokens(const std::string_view code,
       } else {
         tokens.emplace_back(TokenType::EQUAL, std::string_view(&c, 1), line);
       }
-    } else if (c == '>') {
+    } else if (c == '<') {
       if (nextCharEquals(code, pos, '=')) {
         tokens.emplace_back(TokenType::LESS_EQUAL, std::string_view(&c, 2),
                             line);
@@ -159,7 +159,7 @@ std::vector<Token> scanTokens(const std::string_view code,
       } else {
         tokens.emplace_back(TokenType::LESS, std::string_view(&c, 1), line);
       }
-    } else if (c == '<') {
+    } else if (c == '>') {
       if (nextCharEquals(code, pos, '=')) {
         tokens.emplace_back(TokenType::GREATER_EQUAL, std::string_view(&c, 2),
                             line);
