@@ -201,12 +201,12 @@ std::unique_ptr<stmt::Stmt> blockStatement(TokenStream &tokStream) {
   throw ParseException("Reached end of file without closing brace.");
 }
 
-std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
+std::unique_ptr<stmt::Stmt> exprStatement(TokenStream &tokStream) {
   std::unique_ptr<ast::Expr> expr = expression(tokStream);
   switch (tokStream.peek().type) {
   case TokenType::SEMICOLON: {
     tokStream.next();
-    return std::make_unique<stmt::Stmt>(stmt::Print{std::move(expr)});
+    return std::make_unique<stmt::Stmt>(stmt::Expression{std::move(expr)});
   }
   default:
     // TODO: make better error message - line? surrounding toks?
@@ -214,12 +214,12 @@ std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
   }
 }
 
-std::unique_ptr<stmt::Stmt> exprStatement(TokenStream &tokStream) {
+std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
   std::unique_ptr<ast::Expr> expr = expression(tokStream);
   switch (tokStream.peek().type) {
   case TokenType::SEMICOLON: {
     tokStream.next();
-    return std::make_unique<stmt::Stmt>(stmt::Expression{std::move(expr)});
+    return std::make_unique<stmt::Stmt>(stmt::Print{std::move(expr)});
   }
   default:
     // TODO: make better error message - line? surrounding toks?
