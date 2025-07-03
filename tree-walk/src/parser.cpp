@@ -3,11 +3,13 @@
 // program        → statement* EOF ;
 //
 // statement      → blockStmt
+//                | ifStmt
 //                | exprStmt
 //                | printStmt
 //                | varStmt ;
 //
 // blockStmt      → "{" statement* "}" ;
+// ifStmt         → "if" "("" expression ")" statement ("else" statement)? ;
 // exprStmt       → expression ";" ;
 // printStmt      → "print" expression ";" ;
 // varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
@@ -212,8 +214,43 @@ std::unique_ptr<stmt::Stmt> exprStatement(TokenStream &tokStream) {
   }
   default:
     // TODO: make better error message - line? surrounding toks?
-    throw ParseException("No ending semi colon found!");
+    throw ParseException("No ending semi colon found!", tokStream.peek().line);
   }
+}
+
+std::unique_ptr<stmt::Stmt> ifStatement(TokenStream &tokStream) {
+  if (TokenType::LEFT_PAREN != tokStream.peek().type) {
+    throw ParseException("If conditions need to be surrounded by parentheses! "
+                         "No opening paren found.",
+                         tokStream.peek().line);
+  }
+  tokStream.next();
+
+  // Read condition
+  auto ifStmt = std::make_unique<stmt::Stmt>(stmt::If());
+  std::get<stmt::If>(*ifStmt).condition = expression(tokStream);
+  if (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+    throw ParseException("If conditions need to be surrounded by parentheses! "
+                         "No closing paren found.",
+                         tokStream.peek().line);
+  }
+  tokStream.next();
+
+  // Read if branch
+  std::get<stmt::If>(*ifStmt).ifBranch = statement(tokStream);
+
+  // Read optional else branch
+  if (TokenType::ELSE == tokStream.peek().type) {
+    tokStream.next();
+    std::get<stmt::If>(*ifStmt).elseBranch = statement(tokStream);
+  }
+
+  if (TokenType::SEMICOLON == tokStream.peek().type) {
+    tokStream.next();
+    return ifStmt;
+  }
+  throw ParseException("No ending semi colon found for if stmt!",
+                       tokStream.peek().line);
 }
 
 std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
@@ -262,6 +299,10 @@ std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
   case TokenType::LEFT_BRACE: {
     tokStream.next();
     return blockStatement(tokStream);
+  }
+  case TokenType::IF: {
+    tokStream.next();
+    return ifStatement(tokStream);
   }
   case TokenType::PRINT: {
     tokStream.next();

@@ -22,6 +22,7 @@ struct InterpreterVisitor {
 
   // Statements do not need to return anything
   void operator()(const Block &blk);
+  void operator()(const If &ifStmt);
   void operator()(const Expression &expr);
   void operator()(const Print &print);
   void operator()(const VarDecl &varDecl);
@@ -61,6 +62,7 @@ struct DivideVisitor {
 struct TruthyVisitor {
   bool operator()(std::monostate);
   bool operator()(bool b);
+  bool operator()(double b);
   bool operator()(auto &&);
 } g_truther;
 
@@ -88,6 +90,16 @@ void InterpreterVisitor::operator()(const Block &blk) {
   }
   // Restore previous scope
   d_env = d_env->getParentScope();
+}
+
+void InterpreterVisitor::operator()(const If &ifStmt) {
+  Value evaluatedCondition = std::visit(*this, *ifStmt.condition);
+  bool isTruthy = std::visit(g_truther, evaluatedCondition);
+  if (isTruthy) {
+    std::visit(*this, *ifStmt.ifBranch);
+  } else if (ifStmt.elseBranch) {
+    std::visit(*this, *ifStmt.elseBranch);
+  }
 }
 
 void InterpreterVisitor::operator()(const Expression &expr) {
@@ -231,6 +243,8 @@ double DivideVisitor::operator()(auto &&l, auto &&r) {
 bool TruthyVisitor::operator()(std::monostate) { return false; }
 
 bool TruthyVisitor::operator()(bool b) { return b; }
+
+bool TruthyVisitor::operator()(double d) { return static_cast<bool>(d); }
 
 bool TruthyVisitor::operator()(auto &&) { return true; }
 
