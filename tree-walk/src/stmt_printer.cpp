@@ -49,6 +49,13 @@ std::string PrinterVisitor::operator()(const VarDecl &varDecl) {
   return ss.str();
 }
 
+std::string PrinterVisitor::operator()(const While &whileStmt) {
+  std::ostringstream ss;
+  ss << "while" << "(" << std::visit(g_astPrinterVisitor, *whileStmt.condition)
+     << ")" << "(" << std::visit(*this, *whileStmt.body) << ")";
+  return ss.str();
+}
+
 } // namespace stmt
 } // namespace treewalk
 } // namespace plox

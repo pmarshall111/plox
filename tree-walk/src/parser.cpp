@@ -6,13 +6,15 @@
 //                | ifStmt
 //                | exprStmt
 //                | printStmt
-//                | varStmt ;
+//                | varStmt
+//                | whileStmt ;
 //
 // blockStmt      → "{" statement* "}" ;
 // ifStmt         → "if" "(" expression ")" statement ("else" statement)? ";" ;
 // exprStmt       → expression ";" ;
 // printStmt      → "print" expression ";" ;
 // varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
+// whileStmt      → "while" "(" expression ")" statement ";" ;
 
 // expression     → assignment ;
 // assignment     → IDENTIFIER "=" assignment | equality ;
@@ -296,6 +298,37 @@ std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream) {
   }
 }
 
+std::unique_ptr<stmt::Stmt> whileStatement(TokenStream &tokStream) {
+  if (TokenType::LEFT_PAREN != tokStream.peek().type) {
+    throw ParseException(
+        "While conditions need to be surrounded by parentheses! "
+        "No opening paren found.",
+        tokStream.peek().line);
+  }
+  tokStream.next();
+
+  // Read condition
+  auto whileStmt = std::make_unique<stmt::Stmt>(stmt::While());
+  std::get<stmt::While>(*whileStmt).condition = expression(tokStream);
+  if (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+    throw ParseException(
+        "While conditions need to be surrounded by parentheses! "
+        "No closing paren found.",
+        tokStream.peek().line);
+  }
+  tokStream.next();
+
+  // Read body
+  std::get<stmt::While>(*whileStmt).body = statement(tokStream);
+
+  if (TokenType::SEMICOLON == tokStream.peek().type) {
+    tokStream.next();
+    return whileStmt;
+  }
+  throw ParseException("No ending semi colon found for while stmt!",
+                       tokStream.peek().line);
+}
+
 std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
   switch (tokStream.peek().type) {
   case TokenType::LEFT_BRACE: {
@@ -313,6 +346,10 @@ std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
   case TokenType::VAR: {
     tokStream.next();
     return varStatement(tokStream);
+  }
+  case TokenType::WHILE: {
+    tokStream.next();
+    return whileStatement(tokStream);
   }
   default:
     return exprStatement(tokStream);

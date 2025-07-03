@@ -23,7 +23,9 @@ struct Print;
 
 struct VarDecl;
 
-using Stmt = std::variant<Block, If, Expression, Print, VarDecl>;
+struct While;
+
+using Stmt = std::variant<Block, If, Expression, Print, VarDecl, While>;
 
 struct Block {
   std::vector<std::unique_ptr<stmt::Stmt>> stmts;
@@ -46,6 +48,11 @@ struct Print {
 struct VarDecl {
   std::string_view name;
   std::unique_ptr<ast::Expr> expr;
+};
+
+struct While {
+  std::unique_ptr<ast::Expr> condition;
+  std::unique_ptr<stmt::Stmt> body;
 };
 
 } // namespace stmt
