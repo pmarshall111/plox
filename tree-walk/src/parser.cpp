@@ -70,6 +70,7 @@ private:
 
 std::unique_ptr<ast::Expr> expression(TokenStream &tokStream);
 std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream);
+std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream);
 
 std::unique_ptr<ast::Expr> primary(TokenStream &tokStream) {
   const Token &tok = tokStream.peek();
@@ -234,10 +235,14 @@ std::unique_ptr<stmt::Stmt> forStatement(TokenStream &tokStream) {
   auto forStmt = std::make_unique<stmt::Stmt>(stmt::For());
 
   // Read initialiser
-  if (TokenType::SEMICOLON != tokStream.peek().type) {
-    std::get<stmt::For>(*forStmt).initialiser = statement(tokStream);
-  } else {
+  if (TokenType::VAR == tokStream.peek().type) {
     tokStream.next();
+    std::get<stmt::For>(*forStmt).initialiser = varStatement(tokStream);
+  } else if (TokenType::SEMICOLON == tokStream.peek().type) {
+    tokStream.next();
+  } else {
+    // Must be an expression statement
+    std::get<stmt::For>(*forStmt).initialiser = exprStatement(tokStream);
   }
 
   // Read condition
