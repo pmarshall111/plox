@@ -21,6 +21,19 @@ std::string PrinterVisitor::operator()(const Binary &bin) {
   return addParens(ss.str());
 }
 
+std::string PrinterVisitor::operator()(const Call &call) {
+  std::ostringstream ss;
+  ss << std::visit(*this, *call.callee) << "(";
+  for (auto it = call.args.begin(); it != call.args.end(); it++) {
+    ss << std::visit(*this, **it);
+    if (it != call.args.end() - 1) {
+      ss << ",";
+    }
+  }
+  ss << ")";
+  return addParens(ss.str());
+}
+
 std::string PrinterVisitor::operator()(const Grouping &grp) {
   std::ostringstream ss;
   ss << "group " << std::visit(*this, *grp.expr);

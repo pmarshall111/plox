@@ -26,9 +26,11 @@
 // term           → factor ( ( "-" | "+" ) factor )* ;
 // factor         → unary ( ( "/" | "*" ) unary )* ;
 // unary          → ( "!" | "-" ) unary
-//                | primary ;
+//                | call ;
+// call           → primary ( "(" arguments? ")" )* ;
+// arguments      → expression ( "," expression )* ;
 // primary        → NUMBER | STRING | "true" | "false" | "nil"
-//                | "(" expression ")" | IDENTIFIER;
+//                | "(" expression ")" | IDENTIFIER ;
 
 // clang-format on
 
@@ -102,6 +104,40 @@ std::unique_ptr<ast::Expr> primary(TokenStream &tokStream) {
   }
 }
 
+std::unique_ptr<ast::Expr> call(TokenStream &tokStream) {
+  auto expr = primary(tokStream);
+  if (TokenType::LEFT_PAREN != tokStream.peek().type) {
+    // Not a function call
+    return expr;
+  }
+
+  // Loop to support for multiple call levels i.e. fn(1)(2)(3);
+  while (TokenType::LEFT_PAREN == tokStream.peek().type) {
+    tokStream.next();
+    expr = std::make_unique<ast::Expr>(ast::Call{std::move(expr)});
+
+    // Loop to construct arguments
+    while (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+      // Args can be expressions that later need to be evaluated i.e. fn(1+2);
+      auto arg = expression(tokStream);
+      std::get<ast::Call>(*expr).args.emplace_back(std::move(arg));
+
+      if (TokenType::COMMA == tokStream.peek().type) {
+        tokStream.next();
+        if (TokenType::RIGHT_PAREN == tokStream.peek().type) {
+          throw ParseException("Comma must not directly precede closing paren!",
+                               tokStream.peek().line);
+        }
+      } else if (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+        throw ParseException("Argument list must be comma separated!",
+                             tokStream.peek().line);
+      }
+    }
+  }
+
+  return expr;
+}
+
 std::unique_ptr<ast::Expr> unary(TokenStream &tokStream) {
   switch (tokStream.peek().type) {
   case TokenType::BANG:
@@ -111,7 +147,7 @@ std::unique_ptr<ast::Expr> unary(TokenStream &tokStream) {
     return std::make_unique<ast::Expr>(ast::Unary{op, unary(tokStream)});
   }
   default:
-    return primary(tokStream);
+    return call(tokStream);
   }
 }
 
