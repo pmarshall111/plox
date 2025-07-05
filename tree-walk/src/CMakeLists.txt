@@ -5,6 +5,7 @@ add_library(
   ast_printer.cpp
   environment.cpp
   errs.cpp
+  func.cpp
   interpreter.cpp
   parser.cpp
   scanner.cpp

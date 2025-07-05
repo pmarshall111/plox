@@ -1,6 +1,7 @@
 #include <interpreter.h>
 
 #include <ast_printer.h>
+#include <func.h>
 
 #include <cassert>
 #include <charconv>
@@ -34,6 +35,7 @@ struct InterpreterVisitor {
   // Other operations called by statements return Values
   Value operator()(const Assign &assign);
   Value operator()(const Binary &bin);
+  Value operator()(const Call &call);
   Value operator()(const Grouping &grp);
   Value operator()(const Literal &ltrl);
   Value operator()(const Unary &unary);
@@ -191,6 +193,49 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
     throw InterpretException("Unable to interpret binary op: " +
                              tokenutils::tokenTypeToStr(bnry.op.type));
   }
+}
+
+Value InterpreterVisitor::operator()(const Call &call) {
+  // Evaluate the callee. Normally this would just be a function name, but
+  // in chains we may need to evaluate a preceeding function i.e. fn(1)(2);
+  Value callee = std::visit(*this, *call.callee);
+  if (!std::holds_alternative<FuncShrdPtr>(callee)) {
+    throw InterpretException("Tried to call non callable object " +
+                             std::visit(s_valuePrinter, callee));
+  }
+  auto fShrdPtr = std::get<FuncShrdPtr>(callee);
+  if (!fShrdPtr) {
+    throw InterpretException("Internal error! Function pointer is null!");
+  }
+
+  // Check if the number of args matches the callee args
+  if (call.args.size() != fShrdPtr->getArity()) {
+    std::ostringstream ss;
+    ss << "Tried to call " << fShrdPtr->getName() << " with "
+       << call.args.size() << " args when function accepts "
+       << fShrdPtr->getArity() << " args.";
+    throw InterpretException(ss.str());
+  }
+
+  // Update environment to be the environment of the function, and swap back on
+  // destruction
+  std::shared_ptr<Environment> fEnv(fShrdPtr->getClosure());
+  environmentutils::ScopedSwap swapGuard(d_env, fEnv);
+
+  // Set args in new environment
+  const std::vector<std::string_view> &fArgNames = fShrdPtr->getArgNames();
+  for (int i = 0; i < call.args.size(); i++) {
+    Value v = std::visit(*this, *call.args[i]);
+    d_env->define(std::string(fArgNames[i]), v);
+  }
+
+  // Run statements in function
+  const std::vector<stmt::Stmt> &block = fShrdPtr->getBody();
+  for (auto &stmt : block) {
+    std::visit(*this, stmt);
+  }
+
+  return {};
 }
 
 Value InterpreterVisitor::operator()(const Grouping &grp) {
