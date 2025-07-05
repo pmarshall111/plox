@@ -84,14 +84,14 @@ double getNum(const Literal &ltrl) {
 }
 
 void InterpreterVisitor::operator()(const Block &blk) {
-  // Create new scope
-  d_env = std::make_shared<Environment>(d_env);
+  // Create new scope and restore it after this func
+  auto newEnv = std::make_shared<Environment>(d_env);
+  environmentutils::ScopedSwap swapGuard(d_env, newEnv);
+
   // Run statements within block now new env is installed
   for (auto &stmt : blk.stmts) {
     std::visit(*this, *stmt);
   }
-  // Restore previous scope
-  d_env = d_env->getParentScope();
 }
 
 void InterpreterVisitor::operator()(const For &forStmt) {

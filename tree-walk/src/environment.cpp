@@ -43,5 +43,14 @@ std::shared_ptr<Environment> Environment::getParentScope() const {
   return d_parent;
 }
 
+namespace environmentutils {
+ScopedSwap::ScopedSwap(std::shared_ptr<Environment> &a,
+                       std::shared_ptr<Environment> &b)
+    : d_a(a), d_b(b) {
+  std::swap(d_a, d_b);
+}
+ScopedSwap::~ScopedSwap() { std::swap(d_a, d_b); }
+} // namespace environmentutils
+
 } // namespace treewalk
 } // namespace plox
