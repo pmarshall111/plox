@@ -13,6 +13,9 @@ using namespace ast;
 using namespace stmt;
 
 namespace {
+
+static ValuePrinter s_valuePrinter;
+
 // Visitors are defined for each interpret operation.
 
 struct InterpreterVisitor {
@@ -134,7 +137,6 @@ void InterpreterVisitor::operator()(const Print &print) {
   // Calculate expression
   Value v = std::visit(*this, *print.expr);
   // Print
-  static ValuePrinter s_valuePrinter;
   std::cout << std::visit(s_valuePrinter, v) << std::endl;
 }
 
