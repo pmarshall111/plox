@@ -16,9 +16,9 @@ namespace {
 static ValuePrinter s_valuePrinter;
 
 struct AdditionVisitor {
-  double operator()(double l, double r);
-  std::string operator()(const std::string &l, const std::string &r);
-  double operator()(auto &&l, auto &&r);
+  Value operator()(double l, double r);
+  Value operator()(std::string &l, std::string &r);
+  Value operator()(auto &&l, auto &&r);
 } s_adder;
 
 struct SubtractionVisitor {
@@ -259,14 +259,13 @@ Value InterpreterVisitor::operator()(const Variable &var) {
   return d_env->get(std::string(var.name));
 }
 
-double AdditionVisitor::operator()(double l, double r) { return l + r; }
+Value AdditionVisitor::operator()(double l, double r) { return l + r; }
 
-std::string AdditionVisitor::operator()(const std::string &l,
-                                        const std::string &r) {
+Value AdditionVisitor::operator()(std::string &l, std::string &r) {
   return l + r;
 }
 
-double AdditionVisitor::operator()(auto &&l, auto &&r) {
+Value AdditionVisitor::operator()(auto &&l, auto &&r) {
   throw InterpretException(
       "Unable to add types: " + std::string(typeid(l).name()) + " and " +
       std::string(typeid(r).name()));
