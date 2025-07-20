@@ -4,6 +4,7 @@
 #include <optional>
 
 #include <ast_printer.h>
+#include <func_native.h>
 #include <interpreter.h>
 #include <parser.h>
 #include <scanner.h>
@@ -13,6 +14,10 @@ namespace treewalk {
 
 namespace {
 auto s_globals = std::make_shared<Environment>();
+}
+
+void initNativeFuncs(std::shared_ptr<Environment> env) {
+  nativefunc::addClock(env);
 }
 
 int run(const std::string &buff) {
@@ -113,6 +118,7 @@ int main(int argc, char **argv) {
 
   // Route to desired behaviour
   using namespace plox::treewalk;
+  initNativeFuncs(s_globals);
   int rc = 0;
   if (script) {
     rc = runFile(script.value());
