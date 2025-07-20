@@ -6,6 +6,7 @@ add_library(
   environment.cpp
   errs.cpp
   func.cpp
+  interpreter_visitor.cpp
   interpreter.cpp
   parser.cpp
   scanner.cpp

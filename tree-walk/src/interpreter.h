@@ -10,6 +10,7 @@
 namespace plox {
 namespace treewalk {
 
+// The entrypoint to Lox
 void interpret(const std::vector<stmt::Stmt> &stmts,
                std::shared_ptr<Environment> &env,
                std::vector<InterpretException> &errs);
