@@ -133,6 +133,7 @@ std::unique_ptr<ast::Expr> call(TokenStream &tokStream) {
                              tokStream.peek().line);
       }
     }
+    tokStream.next();
   }
 
   return expr;
