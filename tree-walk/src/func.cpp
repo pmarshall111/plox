@@ -10,7 +10,8 @@ namespace treewalk {
 Function::Function(const std::string_view name,
                    std::vector<std::string_view> &&argNames,
                    std::shared_ptr<Environment> closure,
-                   std::variant<std::vector<stmt::Stmt>, nativefunc::Fn> &&body)
+                   std::variant<std::vector<std::unique_ptr<stmt::Stmt>>,
+                                nativefunc::Fn> &&body)
     : d_name(name), d_argNames(std::move(argNames)), d_closure(closure),
       d_body(std::move(body)) {}
 
@@ -30,9 +31,9 @@ Value Function::execute(std::shared_ptr<Environment> env,
     return std::get<nativefunc::Fn>(d_body)(env, interp);
   }
 
-  auto &stmtVec = std::get<std::vector<stmt::Stmt>>(d_body);
+  auto &stmtVec = std::get<std::vector<std::unique_ptr<stmt::Stmt>>>(d_body);
   for (auto &s : stmtVec) {
-    std::visit(interp, s);
+    std::visit(interp, *s);
   }
   return {}; // TODO: Implement return for user defined fns
 }

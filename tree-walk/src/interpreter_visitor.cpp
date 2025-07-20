@@ -80,6 +80,13 @@ void InterpreterVisitor::operator()(const For &forStmt) {
   }
 }
 
+void InterpreterVisitor::operator()(Fun &funStmt) {
+  // Create a function object and store it in the current env
+  auto f = std::make_shared<Function>(funStmt.name, std::move(funStmt.params),
+                                      d_env, std::move(funStmt.stmts));
+  d_env->define(std::string(funStmt.name), f);
+}
+
 void InterpreterVisitor::operator()(const Expression &expr) {
   std::visit(*this, *expr.expr);
 }

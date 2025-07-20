@@ -15,6 +15,7 @@ struct InterpreterVisitor {
   void operator()(const stmt::Block &blk);
   void operator()(const stmt::Expression &expr);
   void operator()(const stmt::For &forStmt);
+  void operator()(stmt::Fun &funStmt);
   void operator()(const stmt::If &ifStmt);
   void operator()(const stmt::Print &print);
   void operator()(const stmt::VarDecl &varDecl);
