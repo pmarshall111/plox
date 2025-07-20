@@ -12,6 +12,7 @@ namespace stmt {
 struct PrinterVisitor {
   std::string operator()(const Block &blk);
   std::string operator()(const For &forStmt);
+  std::string operator()(const Fun &funStmt);
   std::string operator()(const If &ifStmt);
   std::string operator()(const Expression &expr);
   std::string operator()(const Print &print);

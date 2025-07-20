@@ -6,6 +6,7 @@
 //
 // statement      → blockStmt
 //                | exprStmt
+//                | funcStmt
 //                | ifStmt
 //                | printStmt
 //                | varStmt
@@ -13,7 +14,8 @@
 //
 // blockStmt      → "{" statement* "}" ;
 // exprStmt       → expression ";" ;
-// forStmt         → "for" "(" (varStmt | exprStmt | ";") expression? ";" expression? ")" statement ";" ;
+// funcStmt       → "fun" function ;
+// forStmt        → "for" "(" (varStmt | exprStmt | ";") expression? ";" expression? ")" statement ";" ;
 // ifStmt         → "if" "(" expression ")" statement ("else" statement)? ";" ;
 // printStmt      → "print" expression ";" ;
 // varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
@@ -28,9 +30,12 @@
 // unary          → ( "!" | "-" ) unary
 //                | call ;
 // call           → primary ( "(" arguments? ")" )* ;
-// arguments      → expression ( "," expression )* ;
 // primary        → NUMBER | STRING | "true" | "false" | "nil"
 //                | "(" expression ")" | IDENTIFIER ;
+
+// function       → INDENTIFIER "(" parameters? ")" blockStmt ;
+// parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+// arguments      → expression ( "," expression )* ;
 
 // clang-format on
 
@@ -314,6 +319,66 @@ std::unique_ptr<stmt::Stmt> forStatement(TokenStream &tokStream) {
                        tokStream.peek().line);
 }
 
+std::unique_ptr<stmt::Stmt> funStatement(TokenStream &tokStream) {
+  const Token &funStart = tokStream.peek();
+
+  // Get function name
+  if (TokenType::IDENTIFIER != tokStream.peek().type) {
+    throw ParseException("fun declaration not followed by identifier!",
+                         tokStream.peek().line);
+  }
+  auto funStmt =
+      std::make_unique<stmt::Stmt>(stmt::Fun{tokStream.peek().value});
+  tokStream.next();
+
+  if (TokenType::LEFT_PAREN != tokStream.peek().type) {
+    throw ParseException("fun identifier needs to be followed by arguments! "
+                         "No opening paren found.",
+                         tokStream.peek().line);
+  }
+  tokStream.next();
+
+  // Construct params
+  while (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+    if (TokenType::IDENTIFIER != tokStream.peek().type) {
+      throw ParseException("fun argument must be an identifier!",
+                           tokStream.peek().line);
+    }
+    std::get<stmt::Fun>(*funStmt).params.push_back(tokStream.peek().value);
+    tokStream.next();
+
+    if (TokenType::COMMA == tokStream.peek().type) {
+      tokStream.next();
+      if (TokenType::RIGHT_PAREN == tokStream.peek().type) {
+        throw ParseException("Comma must not directly precede closing paren!",
+                             tokStream.peek().line);
+      }
+    } else if (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+      throw ParseException("Argument list must be comma separated!",
+                           tokStream.peek().line);
+    }
+  }
+  tokStream.next();
+
+  // Construct body
+  if (TokenType::LEFT_BRACE != tokStream.peek().type) {
+    throw ParseException("Function must be followed by an opening curly brace!",
+                         tokStream.peek().line);
+  }
+  tokStream.next();
+
+  while (tokStream.hasNext()) {
+    if (TokenType::RIGHT_BRACE == tokStream.peek().type) {
+      tokStream.next();
+      return funStmt;
+    }
+    std::get<stmt::Fun>(*funStmt).stmts.push_back(
+        std::move(statement(tokStream)));
+  }
+
+  throw ParseException("Function block has no closing brace.", funStart.line);
+}
+
 std::unique_ptr<stmt::Stmt> ifStatement(TokenStream &tokStream) {
   if (TokenType::LEFT_PAREN != tokStream.peek().type) {
     throw ParseException("If conditions need to be surrounded by parentheses! "
@@ -430,6 +495,10 @@ std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
   case TokenType::FOR: {
     tokStream.next();
     return forStatement(tokStream);
+  }
+  case TokenType::FUN: {
+    tokStream.next();
+    return funStatement(tokStream);
   }
   case TokenType::IF: {
     tokStream.next();

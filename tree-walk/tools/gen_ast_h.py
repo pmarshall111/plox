@@ -119,9 +119,10 @@ if __name__ == "__main__":
 
     define_ast("tree-walk/src/stmt.h", "STMT", "Stmt", ["plox", "treewalk", "stmt"], ["ast.h", "memory", "variant"], [
         {"name": "Block", "members": [{"type": "std::vector<std::unique_ptr<stmt::Stmt>>", "name": "stmts"}]},
-        {"name": "For", "members": [{"type": "std::unique_ptr<stmt::Stmt>", "name": "initialiser"}, {"type": "std::unique_ptr<ast::Expr>", "name": "condition"}, {"type": "std::unique_ptr<ast::Expr>", "name": "incrementer"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "body"}]},
-        {"name": "If", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "condition"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "ifBranch"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "elseBranch"}]},
         {"name": "Expression", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]},
+        {"name": "For", "members": [{"type": "std::unique_ptr<stmt::Stmt>", "name": "initialiser"}, {"type": "std::unique_ptr<ast::Expr>", "name": "condition"}, {"type": "std::unique_ptr<ast::Expr>", "name": "incrementer"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "body"}]},
+        {"name": "Fun", "members": [{"type": "std::string_view", "name": "name"}, {"type": "std::vector<std::string_view>", "name": "params"}, {"type": "std::vector<std::unique_ptr<stmt::Stmt>>", "name": "stmts"}]},
+        {"name": "If", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "condition"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "ifBranch"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "elseBranch"}]},
         {"name": "Print", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]},
         {"name": "VarDecl", "members": [{"type": "std::string_view", "name": "name"}, {"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]},
         {"name": "While", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "condition"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "body"}]},

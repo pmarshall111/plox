@@ -38,6 +38,23 @@ std::string PrinterVisitor::operator()(const For &forStmt) {
   return ss.str();
 }
 
+std::string PrinterVisitor::operator()(const Fun &funStmt) {
+  std::ostringstream ss;
+  ss << "fun" << "(";
+  for (auto it = funStmt.params.begin(); it != funStmt.params.end(); it++) {
+    ss << *it;
+    if (it != funStmt.params.end() - 1) {
+      ss << ",";
+    }
+  }
+  ss << ")";
+
+  for (auto &s : funStmt.stmts) {
+    ss << std::visit(*this, *s);
+  }
+  return ss.str();
+}
+
 std::string PrinterVisitor::operator()(const If &ifStmt) {
   std::ostringstream ss;
   ss << "if" << "(" << std::visit(g_astPrinterVisitor, *ifStmt.condition) << ")"

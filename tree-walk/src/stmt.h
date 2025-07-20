@@ -15,11 +15,13 @@ namespace stmt {
 
 struct Block;
 
+struct Expression;
+
 struct For;
 
-struct If;
+struct Fun;
 
-struct Expression;
+struct If;
 
 struct Print;
 
@@ -27,10 +29,15 @@ struct VarDecl;
 
 struct While;
 
-using Stmt = std::variant<Block, For, If, Expression, Print, VarDecl, While>;
+using Stmt =
+    std::variant<Block, Expression, For, Fun, If, Print, VarDecl, While>;
 
 struct Block {
   std::vector<std::unique_ptr<stmt::Stmt>> stmts;
+};
+
+struct Expression {
+  std::unique_ptr<ast::Expr> expr;
 };
 
 struct For {
@@ -40,14 +47,16 @@ struct For {
   std::unique_ptr<stmt::Stmt> body;
 };
 
+struct Fun {
+  std::string_view name;
+  std::vector<std::string_view> params;
+  std::vector<std::unique_ptr<stmt::Stmt>> stmts;
+};
+
 struct If {
   std::unique_ptr<ast::Expr> condition;
   std::unique_ptr<stmt::Stmt> ifBranch;
   std::unique_ptr<stmt::Stmt> elseBranch;
-};
-
-struct Expression {
-  std::unique_ptr<ast::Expr> expr;
 };
 
 struct Print {
