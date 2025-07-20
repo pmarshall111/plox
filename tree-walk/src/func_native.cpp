@@ -19,10 +19,20 @@ Value clock(std::shared_ptr<Environment> env, InterpreterVisitor &interpV) {
 } // namespace
 
 void addClock(std::shared_ptr<Environment> env) {
-  static std::string_view s_name = "clock";
+  static std::string s_name = "clock";
   auto clockFn = std::make_shared<Function>(
       s_name, std::vector<std::string_view>{}, env, clock);
-  env->define("clock", clockFn);
+  env->define(s_name, clockFn);
+}
+
+void addVersion(std::shared_ptr<Environment> env) {
+  static std::string s_name = "version";
+  auto versionFn = std::make_shared<Function>(
+      s_name, std::vector<std::string_view>{}, env,
+      [](std::shared_ptr<Environment> env, InterpreterVisitor &interpV) {
+        return "tree-walk";
+      });
+  env->define(s_name, versionFn);
 }
 
 } // namespace nativefunc

@@ -18,6 +18,7 @@ auto s_globals = std::make_shared<Environment>();
 
 void initNativeFuncs(std::shared_ptr<Environment> env) {
   nativefunc::addClock(env);
+  nativefunc::addVersion(env);
 }
 
 int run(const std::string &buff) {
