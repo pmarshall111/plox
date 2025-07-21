@@ -120,3 +120,22 @@ def test_fun_closure(lox_runner):
     assert stderr == ""
 
 
+def test_function_as_arg(lox_runner):
+    # GIVEN
+    code = """
+    fun printResult(func, x) {
+        var ret = func(x);
+        print ret;
+    }
+    fun addMyName(x) {
+        return x + " peter";
+    }
+    printResult(addMyName, "Created by");
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["Created by peter"]
+    assert stderr == ""

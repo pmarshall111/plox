@@ -196,17 +196,19 @@ Value InterpreterVisitor::operator()(const Call &call) {
     throw InterpretException(ss.str());
   }
 
-  // Update environment to be the environment of the function, and swap back on
-  // destruction
-  std::shared_ptr<Environment> fEnv(fShrdPtr->getClosure());
-  environmentutils::ScopedSwap swapGuard(d_env, fEnv);
+  // Create a new environment for the func to execute in
+  auto fEnv = std::make_shared<Environment>(fShrdPtr->getClosure());
 
   // Set args in new environment
   const std::vector<std::string_view> &fArgNames = fShrdPtr->getArgNames();
   for (int i = 0; i < call.args.size(); i++) {
     Value v = std::visit(*this, *call.args[i]);
-    d_env->define(std::string(fArgNames[i]), v);
+    fEnv->define(std::string(fArgNames[i]), v);
   }
+
+  // Update environment to be the environment of the function, and swap back on
+  // destruction
+  environmentutils::ScopedSwap swapGuard(d_env, fEnv);
 
   try {
     // Pass execution to function. If the user has written a return statement it
