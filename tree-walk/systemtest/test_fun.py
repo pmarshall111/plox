@@ -62,3 +62,40 @@ def test_fun_more_args(lox_runner):
     assert "accepts 1 args" in stderr.strip()
 
 
+def test_fun_return(lox_runner):
+    # GIVEN
+    code = """
+    fun nTimes2(n) {
+        return n * 2;
+    }
+    var a = nTimes2(5);
+    print a;
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["10"]
+    assert stderr == ""
+
+
+def test_fun_empty_return(lox_runner):
+    # GIVEN
+    code = """
+    fun explicitNullReturn() {
+        return;
+    }
+    fun implicitNullReturn() {}
+    print explicitNullReturn();
+    print implicitNullReturn();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["NULL", "NULL"]
+    assert stderr == ""
+
+
