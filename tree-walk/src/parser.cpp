@@ -265,7 +265,6 @@ std::unique_ptr<stmt::Stmt> exprStatement(TokenStream &tokStream) {
     return std::make_unique<stmt::Stmt>(stmt::Expression{std::move(expr)});
   }
   default:
-    // TODO: make better error message - line? surrounding toks?
     throw ParseException("No ending semi colon found!", tokStream.peek().line);
   }
 }
@@ -424,7 +423,6 @@ std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
     return std::make_unique<stmt::Stmt>(stmt::Print{std::move(expr)});
   }
   default:
-    // TODO: make better error message - line? surrounding toks?
     throw ParseException("No ending semi colon found!", tokStream.peek().line);
   }
 }
