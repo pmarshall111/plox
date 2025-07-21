@@ -16,6 +16,7 @@ struct PrinterVisitor {
   std::string operator()(const If &ifStmt);
   std::string operator()(const Expression &expr);
   std::string operator()(const Print &print);
+  std::string operator()(const Return &ret);
   std::string operator()(const VarDecl &varDecl);
   std::string operator()(const While &whileStmt);
 };

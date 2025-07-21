@@ -25,12 +25,14 @@ struct If;
 
 struct Print;
 
+struct Return;
+
 struct VarDecl;
 
 struct While;
 
-using Stmt =
-    std::variant<Block, Expression, For, Fun, If, Print, VarDecl, While>;
+using Stmt = std::variant<Block, Expression, For, Fun, If, Print, Return,
+                          VarDecl, While>;
 
 struct Block {
   std::vector<std::unique_ptr<stmt::Stmt>> stmts;
@@ -60,6 +62,10 @@ struct If {
 };
 
 struct Print {
+  std::unique_ptr<ast::Expr> expr;
+};
+
+struct Return {
   std::unique_ptr<ast::Expr> expr;
 };
 

@@ -9,6 +9,7 @@
 //                | funcStmt
 //                | ifStmt
 //                | printStmt
+//                | returnStmt
 //                | varStmt
 //                | whileStmt ;
 //
@@ -18,6 +19,7 @@
 // forStmt        → "for" "(" (varStmt | exprStmt | ";") expression? ";" expression? ")" statement ";" ;
 // ifStmt         → "if" "(" expression ")" statement ("else" statement)? ";" ;
 // printStmt      → "print" expression ";" ;
+// returnStmt     → "return" expression? ";" ;
 // varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
 // whileStmt      → "while" "(" expression ")" statement ";" ;
 
@@ -427,6 +429,23 @@ std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
   }
 }
 
+std::unique_ptr<stmt::Stmt> returnStatement(TokenStream &tokStream) {
+  switch (tokStream.peek().type) {
+  case TokenType::SEMICOLON: {
+    tokStream.next();
+    return std::make_unique<stmt::Stmt>(stmt::Return{});
+  }
+  default:
+    std::unique_ptr<ast::Expr> expr = expression(tokStream);
+    if (TokenType::SEMICOLON != tokStream.peek().type) {
+      throw ParseException("No ending semi colon found!",
+                           tokStream.peek().line);
+    }
+    tokStream.next();
+    return std::make_unique<stmt::Stmt>(stmt::Return{std::move(expr)});
+  }
+}
+
 std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream) {
   const Token &varName = tokStream.peek();
   tokStream.next();
@@ -507,6 +526,10 @@ std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
   case TokenType::PRINT: {
     tokStream.next();
     return printStatement(tokStream);
+  }
+  case TokenType::RETURN: {
+    tokStream.next();
+    return returnStatement(tokStream);
   }
   case TokenType::VAR: {
     tokStream.next();

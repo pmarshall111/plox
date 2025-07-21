@@ -35,7 +35,7 @@ Value Function::execute(std::shared_ptr<Environment> env,
   for (auto &s : stmtVec) {
     std::visit(interp, *s);
   }
-  return {}; // TODO: Implement return for user defined fns
+  return {}; // return null if the user doesn't explicitly add a return stmt.
 }
 
 std::ostream &operator<<(std::ostream &os, const Function &fn) {

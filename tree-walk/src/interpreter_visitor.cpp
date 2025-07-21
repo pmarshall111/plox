@@ -42,6 +42,11 @@ struct TruthyVisitor {
   bool operator()(double b);
   bool operator()(auto &&);
 } s_truther;
+
+struct ReturnEx : public std::runtime_error {
+  ReturnEx(Value v) : d_val(v), std::runtime_error("return"){};
+  Value d_val;
+};
 } // namespace
 
 InterpreterVisitor::InterpreterVisitor(std::shared_ptr<Environment> &env)
@@ -106,6 +111,14 @@ void InterpreterVisitor::operator()(const Print &print) {
   Value v = std::visit(*this, *print.expr);
   // Print
   std::cout << std::visit(s_valuePrinter, v) << std::endl;
+}
+
+void InterpreterVisitor::operator()(const Return &ret) {
+  Value v = {};
+  if (ret.expr) {
+    v = std::visit(*this, *ret.expr);
+  }
+  throw ReturnEx{v};
 }
 
 void InterpreterVisitor::operator()(const VarDecl &varDecl) {
@@ -195,8 +208,13 @@ Value InterpreterVisitor::operator()(const Call &call) {
     d_env->define(std::string(fArgNames[i]), v);
   }
 
-  // Pass execution to function
-  return fShrdPtr->execute(d_env, *this);
+  try {
+    // Pass execution to function. If the user has written a return statement it
+    // will throw and be caught below
+    return fShrdPtr->execute(d_env, *this);
+  } catch (ReturnEx ex) {
+    return ex.d_val;
+  }
 }
 
 Value InterpreterVisitor::operator()(const Grouping &grp) {

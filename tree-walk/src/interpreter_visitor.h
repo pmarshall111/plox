@@ -18,6 +18,7 @@ struct InterpreterVisitor {
   void operator()(stmt::Fun &funStmt);
   void operator()(const stmt::If &ifStmt);
   void operator()(const stmt::Print &print);
+  void operator()(const stmt::Return &ret);
   void operator()(const stmt::VarDecl &varDecl);
   void operator()(const stmt::While &whileStmt);
   // Other operations called by statements return Values

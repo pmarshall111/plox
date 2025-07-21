@@ -75,6 +75,16 @@ std::string PrinterVisitor::operator()(const Print &print) {
   return ss.str();
 }
 
+std::string PrinterVisitor::operator()(const Return &ret) {
+  std::ostringstream ss;
+  ss << "return ";
+  if (ret.expr) {
+    ss << std::visit(g_astPrinterVisitor, *ret.expr);
+  }
+  ss << ";";
+  return ss.str();
+}
+
 std::string PrinterVisitor::operator()(const VarDecl &varDecl) {
   std::ostringstream ss;
   ss << "var " << varDecl.name;
