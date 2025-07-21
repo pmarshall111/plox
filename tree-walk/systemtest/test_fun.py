@@ -99,3 +99,24 @@ def test_fun_empty_return(lox_runner):
     assert stderr == ""
 
 
+def test_fun_closure(lox_runner):
+    # GIVEN
+    code = """
+    fun nTimesX(x) {
+        fun closure(n) {
+            return n * x;
+        }
+        return closure;
+    }
+    var a = nTimesX(3)(5);
+    print a;
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["15"]
+    assert stderr == ""
+
+
