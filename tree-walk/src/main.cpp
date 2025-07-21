@@ -27,7 +27,7 @@ int run(const std::string &buff) {
   auto tokens = scanTokens(buff, syntErrs);
   if (syntErrs.size()) {
     for (auto &err : syntErrs) {
-      std::cout << "Syntax error: " << err << std::endl;
+      std::cerr << "Syntax error: " << err << std::endl;
     }
     return -1;
   }
@@ -37,7 +37,7 @@ int run(const std::string &buff) {
   auto stmts = parse(tokens, parsErrs);
   if (parsErrs.size()) {
     for (auto &err : parsErrs) {
-      std::cout << "Parse error: " << err << std::endl;
+      std::cerr << "Parse error: " << err << std::endl;
     }
     return -2;
   }
@@ -47,7 +47,7 @@ int run(const std::string &buff) {
   interpret(stmts, s_globals, interpErrs);
   if (interpErrs.size()) {
     for (auto &err : interpErrs) {
-      std::cout << "Interpreter error: " << err << std::endl;
+      std::cerr << "Interpreter error: " << err << std::endl;
     }
     return -3;
   }
