@@ -34,7 +34,7 @@ CMAKE_FILES=$(shell find tree-walk -name "*CMakeLists.txt")
 format:
 	clang-format -i $(SRC_FILES)
 	cmake-format -i $(CMAKE_FILES)
-	black .
+	black -q .
 
 .PHONY: gen
 gen:
