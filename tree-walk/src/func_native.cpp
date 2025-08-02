@@ -9,17 +9,17 @@ namespace plox {
 namespace treewalk {
 namespace nativefunc {
 
-namespace {
-Value clock(std::shared_ptr<Environment> env, InterpreterVisitor &interpV) {
-  // Use steady_clock bc it's monotonic so won't go backwards when the clocks
-  // change unlike system_clock
-  auto duration = std::chrono::steady_clock::now().time_since_epoch();
-  return std::chrono::duration<double, std::milli>(duration).count();
-}
-} // namespace
-
 void addClock(std::shared_ptr<Environment> env) {
   static std::string s_name = "clock";
+
+  auto clock = [](std::shared_ptr<Environment> env,
+                  InterpreterVisitor &interpV) {
+    // Use steady_clock bc it's monotonic so won't go backwards when the clocks
+    // change unlike system_clock
+    auto duration = std::chrono::steady_clock::now().time_since_epoch();
+    return std::chrono::duration<double, std::milli>(duration).count();
+  };
+
   auto clockFn = std::make_shared<Function>(
       s_name, std::vector<std::string_view>{}, env, clock);
   env->define(s_name, clockFn);
@@ -27,11 +27,12 @@ void addClock(std::shared_ptr<Environment> env) {
 
 void addVersion(std::shared_ptr<Environment> env) {
   static std::string s_name = "version";
+
+  auto version = [](std::shared_ptr<Environment> env,
+                    InterpreterVisitor &interpV) { return "tree-walk"; };
+
   auto versionFn = std::make_shared<Function>(
-      s_name, std::vector<std::string_view>{}, env,
-      [](std::shared_ptr<Environment> env, InterpreterVisitor &interpV) {
-        return "tree-walk";
-      });
+      s_name, std::vector<std::string_view>{}, env, version);
   env->define(s_name, versionFn);
 }
 
