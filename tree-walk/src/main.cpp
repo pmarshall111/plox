@@ -4,6 +4,7 @@
 #include <optional>
 
 #include <ast_printer.h>
+#include <func_native.h>
 #include <interpreter.h>
 #include <parser.h>
 #include <scanner.h>
@@ -15,13 +16,18 @@ namespace {
 auto s_globals = std::make_shared<Environment>();
 }
 
+void initNativeFuncs(std::shared_ptr<Environment> env) {
+  nativefunc::addClock(env);
+  nativefunc::addVersion(env);
+}
+
 int run(const std::string &buff) {
   // Scan
   std::vector<SyntaxException> syntErrs;
   auto tokens = scanTokens(buff, syntErrs);
   if (syntErrs.size()) {
     for (auto &err : syntErrs) {
-      std::cout << "Syntax error: " << err << std::endl;
+      std::cerr << "Syntax error: " << err << std::endl;
     }
     return -1;
   }
@@ -31,7 +37,7 @@ int run(const std::string &buff) {
   auto stmts = parse(tokens, parsErrs);
   if (parsErrs.size()) {
     for (auto &err : parsErrs) {
-      std::cout << "Parse error: " << err << std::endl;
+      std::cerr << "Parse error: " << err << std::endl;
     }
     return -2;
   }
@@ -41,7 +47,7 @@ int run(const std::string &buff) {
   interpret(stmts, s_globals, interpErrs);
   if (interpErrs.size()) {
     for (auto &err : interpErrs) {
-      std::cout << "Interpreter error: " << err << std::endl;
+      std::cerr << "Interpreter error: " << err << std::endl;
     }
     return -3;
   }
@@ -113,6 +119,7 @@ int main(int argc, char **argv) {
 
   // Route to desired behaviour
   using namespace plox::treewalk;
+  initNativeFuncs(s_globals);
   int rc = 0;
   if (script) {
     rc = runFile(script.value());

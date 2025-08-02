@@ -6,16 +6,20 @@
 //
 // statement      → blockStmt
 //                | exprStmt
+//                | funcStmt
 //                | ifStmt
 //                | printStmt
+//                | returnStmt
 //                | varStmt
 //                | whileStmt ;
 //
 // blockStmt      → "{" statement* "}" ;
 // exprStmt       → expression ";" ;
-// forStmt         → "for" "(" (varStmt | exprStmt | ";") expression? ";" expression? ")" statement ";" ;
+// funcStmt       → "fun" function ;
+// forStmt        → "for" "(" (varStmt | exprStmt | ";") expression? ";" expression? ")" statement ";" ;
 // ifStmt         → "if" "(" expression ")" statement ("else" statement)? ";" ;
 // printStmt      → "print" expression ";" ;
+// returnStmt     → "return" expression? ";" ;
 // varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
 // whileStmt      → "while" "(" expression ")" statement ";" ;
 
@@ -26,9 +30,14 @@
 // term           → factor ( ( "-" | "+" ) factor )* ;
 // factor         → unary ( ( "/" | "*" ) unary )* ;
 // unary          → ( "!" | "-" ) unary
-//                | primary ;
+//                | call ;
+// call           → primary ( "(" arguments? ")" )* ;
 // primary        → NUMBER | STRING | "true" | "false" | "nil"
-//                | "(" expression ")" | IDENTIFIER;
+//                | "(" expression ")" | IDENTIFIER ;
+
+// function       → INDENTIFIER "(" parameters? ")" blockStmt ;
+// parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+// arguments      → expression ( "," expression )* ;
 
 // clang-format on
 
@@ -102,6 +111,41 @@ std::unique_ptr<ast::Expr> primary(TokenStream &tokStream) {
   }
 }
 
+std::unique_ptr<ast::Expr> call(TokenStream &tokStream) {
+  auto expr = primary(tokStream);
+  if (TokenType::LEFT_PAREN != tokStream.peek().type) {
+    // Not a function call
+    return expr;
+  }
+
+  // Loop to support for multiple call levels i.e. fn(1)(2)(3);
+  while (TokenType::LEFT_PAREN == tokStream.peek().type) {
+    tokStream.next();
+    expr = std::make_unique<ast::Expr>(ast::Call{std::move(expr)});
+
+    // Loop to construct arguments
+    while (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+      // Args can be expressions that later need to be evaluated i.e. fn(1+2);
+      auto arg = expression(tokStream);
+      std::get<ast::Call>(*expr).args.emplace_back(std::move(arg));
+
+      if (TokenType::COMMA == tokStream.peek().type) {
+        tokStream.next();
+        if (TokenType::RIGHT_PAREN == tokStream.peek().type) {
+          throw ParseException("Comma must not directly precede closing paren!",
+                               tokStream.peek().line);
+        }
+      } else if (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+        throw ParseException("Argument list must be comma separated!",
+                             tokStream.peek().line);
+      }
+    }
+    tokStream.next();
+  }
+
+  return expr;
+}
+
 std::unique_ptr<ast::Expr> unary(TokenStream &tokStream) {
   switch (tokStream.peek().type) {
   case TokenType::BANG:
@@ -111,7 +155,7 @@ std::unique_ptr<ast::Expr> unary(TokenStream &tokStream) {
     return std::make_unique<ast::Expr>(ast::Unary{op, unary(tokStream)});
   }
   default:
-    return primary(tokStream);
+    return call(tokStream);
   }
 }
 
@@ -221,7 +265,6 @@ std::unique_ptr<stmt::Stmt> exprStatement(TokenStream &tokStream) {
     return std::make_unique<stmt::Stmt>(stmt::Expression{std::move(expr)});
   }
   default:
-    // TODO: make better error message - line? surrounding toks?
     throw ParseException("No ending semi colon found!", tokStream.peek().line);
   }
 }
@@ -277,6 +320,66 @@ std::unique_ptr<stmt::Stmt> forStatement(TokenStream &tokStream) {
                        tokStream.peek().line);
 }
 
+std::unique_ptr<stmt::Stmt> funStatement(TokenStream &tokStream) {
+  const Token &funStart = tokStream.peek();
+
+  // Get function name
+  if (TokenType::IDENTIFIER != tokStream.peek().type) {
+    throw ParseException("fun declaration not followed by identifier!",
+                         tokStream.peek().line);
+  }
+  auto funStmt =
+      std::make_unique<stmt::Stmt>(stmt::Fun{tokStream.peek().value});
+  tokStream.next();
+
+  if (TokenType::LEFT_PAREN != tokStream.peek().type) {
+    throw ParseException("fun identifier needs to be followed by arguments! "
+                         "No opening paren found.",
+                         tokStream.peek().line);
+  }
+  tokStream.next();
+
+  // Construct params
+  while (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+    if (TokenType::IDENTIFIER != tokStream.peek().type) {
+      throw ParseException("fun argument must be an identifier!",
+                           tokStream.peek().line);
+    }
+    std::get<stmt::Fun>(*funStmt).params.push_back(tokStream.peek().value);
+    tokStream.next();
+
+    if (TokenType::COMMA == tokStream.peek().type) {
+      tokStream.next();
+      if (TokenType::RIGHT_PAREN == tokStream.peek().type) {
+        throw ParseException("Comma must not directly precede closing paren!",
+                             tokStream.peek().line);
+      }
+    } else if (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+      throw ParseException("Argument list must be comma separated!",
+                           tokStream.peek().line);
+    }
+  }
+  tokStream.next();
+
+  // Construct body
+  if (TokenType::LEFT_BRACE != tokStream.peek().type) {
+    throw ParseException("Function must be followed by an opening curly brace!",
+                         tokStream.peek().line);
+  }
+  tokStream.next();
+
+  while (tokStream.hasNext()) {
+    if (TokenType::RIGHT_BRACE == tokStream.peek().type) {
+      tokStream.next();
+      return funStmt;
+    }
+    std::get<stmt::Fun>(*funStmt).stmts.push_back(
+        std::move(statement(tokStream)));
+  }
+
+  throw ParseException("Function block has no closing brace.", funStart.line);
+}
+
 std::unique_ptr<stmt::Stmt> ifStatement(TokenStream &tokStream) {
   if (TokenType::LEFT_PAREN != tokStream.peek().type) {
     throw ParseException("If conditions need to be surrounded by parentheses! "
@@ -320,8 +423,24 @@ std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
     return std::make_unique<stmt::Stmt>(stmt::Print{std::move(expr)});
   }
   default:
-    // TODO: make better error message - line? surrounding toks?
     throw ParseException("No ending semi colon found!", tokStream.peek().line);
+  }
+}
+
+std::unique_ptr<stmt::Stmt> returnStatement(TokenStream &tokStream) {
+  switch (tokStream.peek().type) {
+  case TokenType::SEMICOLON: {
+    tokStream.next();
+    return std::make_unique<stmt::Stmt>(stmt::Return{});
+  }
+  default:
+    std::unique_ptr<ast::Expr> expr = expression(tokStream);
+    if (TokenType::SEMICOLON != tokStream.peek().type) {
+      throw ParseException("No ending semi colon found!",
+                           tokStream.peek().line);
+    }
+    tokStream.next();
+    return std::make_unique<stmt::Stmt>(stmt::Return{std::move(expr)});
   }
 }
 
@@ -394,6 +513,10 @@ std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
     tokStream.next();
     return forStatement(tokStream);
   }
+  case TokenType::FUN: {
+    tokStream.next();
+    return funStatement(tokStream);
+  }
   case TokenType::IF: {
     tokStream.next();
     return ifStatement(tokStream);
@@ -401,6 +524,10 @@ std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
   case TokenType::PRINT: {
     tokStream.next();
     return printStatement(tokStream);
+  }
+  case TokenType::RETURN: {
+    tokStream.next();
+    return returnStatement(tokStream);
   }
   case TokenType::VAR: {
     tokStream.next();
