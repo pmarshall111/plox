@@ -7,7 +7,6 @@ add_library(
   errs.cpp
   func_native.cpp
   func.cpp
-  interpreter_visitor.cpp
   interpreter.cpp
   parser.cpp
   scanner.cpp

@@ -2,7 +2,7 @@
 #define TREEWALK_FUNC_NATIVE_H
 
 #include <environment.h>
-#include <interpreter_visitor.h>
+#include <interpreter.h>
 
 #include <functional>
 

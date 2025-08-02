@@ -3,7 +3,7 @@
 
 #include <environment.h>
 #include <func_native.h>
-#include <interpreter_visitor.h>
+#include <interpreter.h>
 #include <stmt.h>
 #include <value.h>
 
