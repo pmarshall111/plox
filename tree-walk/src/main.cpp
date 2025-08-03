@@ -13,7 +13,7 @@ namespace plox {
 namespace treewalk {
 
 namespace {
-auto s_globals = std::make_shared<Environment>();
+auto s_globals = Environment::create();
 }
 
 void initNativeFuncs(std::shared_ptr<Environment> env) {

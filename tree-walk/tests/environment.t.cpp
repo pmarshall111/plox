@@ -9,65 +9,85 @@ namespace test {
 
 TEST(Environment, DefineAndGet) {
   // GIVEN
-  Environment env;
+  auto envPtr = Environment::create();
   Value initial = 42.0;
 
   // WHEN
-  env.define("x", initial);
+  envPtr->define("x", initial);
 
   // THEN
-  EXPECT_EQ(env.get("x"), initial);
+  EXPECT_EQ(envPtr->get("x"), initial);
 }
 
 TEST(Environment, AssignAndGet) {
   // GIVEN
-  Environment env;
+  auto envPtr = Environment::create();
   Value initial = 42.0;
   Value updated = "hi";
 
   // WHEN
-  env.define("x", initial);
-  env.assign("x", updated);
+  envPtr->define("x", initial);
+  envPtr->assign("x", updated);
 
   // THEN
-  EXPECT_EQ(env.get("x"), updated);
+  EXPECT_EQ(envPtr->get("x"), updated);
 }
 
 TEST(Environment, GetFromParentEnv) {
   // GIVEN
-  auto parent = std::make_shared<Environment>();
+  auto parentPtr = Environment::create();
   Value v = 99.0;
-  parent->define("x", v);
-  Environment child(parent);
+  parentPtr->define("x", v);
+  auto childPtr = Environment::create(parentPtr);
 
   // THEN
-  EXPECT_EQ(child.get("x"), v);
+  EXPECT_EQ(childPtr->get("x"), v);
 }
 
 TEST(Environment, AssignInParentEnv) {
   // GIVEN
-  auto parent = std::make_shared<Environment>();
+  auto parentPtr = Environment::create();
   Value initial = 50.0;
   Value updated = true;
-  parent->define("x", initial);
-  Environment child(parent);
+  parentPtr->define("x", initial);
+  auto childPtr = Environment::create(parentPtr);
 
   // WHEN
-  child.assign("x", updated);
+  childPtr->assign("x", updated);
 
   // THEN
-  EXPECT_EQ(child.get("x"), updated);
-  EXPECT_EQ(parent->get("x"), updated);
+  EXPECT_EQ(childPtr->get("x"), updated);
+  EXPECT_EQ(parentPtr->get("x"), updated);
 }
 
 TEST(Environment, GetUndefinedThrows) {
-  Environment env;
-  EXPECT_THROW(env.get("missing"), InterpretException);
+  auto envPtr = Environment::create();
+  EXPECT_THROW(envPtr->get("missing"), InterpretException);
 }
 
 TEST(Environment, AssignUndefinedThrows) {
-  Environment env;
-  EXPECT_THROW(env.assign("x", {}), InterpretException);
+  auto envPtr = Environment::create();
+  EXPECT_THROW(envPtr->assign("x", {}), InterpretException);
+}
+
+TEST(Environment, multipleEnvForScope) {
+  // GIVEN
+  auto globalPtr = Environment::create();
+  globalPtr->define("x", 12.0);
+
+  auto scopePtr = Environment::create(globalPtr);
+  scopePtr->define("y", 50.0);
+
+  auto scopePtr2 = Environment::extend(scopePtr);
+  scopePtr2->define("z", 15.0);
+
+  // WHEN
+  auto tailOfScope = Environment::extend(scopePtr2);
+
+  // THEN
+  EXPECT_THROW(scopePtr->define("newVar", "_"), InterpretException);
+  EXPECT_NO_THROW(tailOfScope->define("x", "abc"));
+  EXPECT_THROW(tailOfScope->define("y", "abc"), InterpretException);
 }
 
 } // namespace test

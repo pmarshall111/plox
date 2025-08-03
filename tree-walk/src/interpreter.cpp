@@ -67,7 +67,7 @@ InterpreterVisitor::InterpreterVisitor(std::shared_ptr<Environment> &env)
 
 void InterpreterVisitor::operator()(const Block &blk) {
   // Create new scope and restore it after this func
-  auto newEnv = std::make_shared<Environment>(d_env);
+  auto newEnv = Environment::create(d_env);
   environmentutils::ScopedSwap swapGuard(d_env, newEnv);
 
   // Run statements within block now new env is installed
@@ -103,6 +103,11 @@ void InterpreterVisitor::operator()(Fun &funStmt) {
   auto f = std::make_shared<Function>(funStmt.name, std::move(funStmt.params),
                                       d_env, std::move(funStmt.stmts));
   d_env->define(std::string(funStmt.name), f);
+
+  // Extend scope so this function can have an Environment with only the
+  // currently defined vars for the scope
+  auto scopeExt = Environment::extend(d_env);
+  std::swap(scopeExt, d_env);
 }
 
 void InterpreterVisitor::operator()(const Expression &expr) {
@@ -210,7 +215,7 @@ Value InterpreterVisitor::operator()(const Call &call) {
   }
 
   // Create a new environment for the func to execute in
-  auto fEnv = std::make_shared<Environment>(fShrdPtr->getClosure());
+  auto fEnv = Environment::create(fShrdPtr->getClosure());
 
   // Set args in new environment
   const std::vector<std::string_view> &fArgNames = fShrdPtr->getArgNames();
@@ -335,7 +340,6 @@ bool TruthyVisitor::operator()(bool b) { return b; }
 bool TruthyVisitor::operator()(double d) { return static_cast<bool>(d); }
 
 bool TruthyVisitor::operator()(auto &&) { return true; }
-
 
 } // namespace treewalk
 } // namespace plox

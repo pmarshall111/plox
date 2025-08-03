@@ -5,8 +5,23 @@
 namespace plox {
 namespace treewalk {
 
-Environment::Environment(std::shared_ptr<Environment> &parent)
-    : d_parent(parent) {}
+std::shared_ptr<Environment>
+Environment::create(std::shared_ptr<Environment> parent) {
+  auto envPtr = std::shared_ptr<Environment>(new Environment(parent));
+  return envPtr;
+}
+
+std::shared_ptr<Environment>
+Environment::extend(std::shared_ptr<Environment> scope) {
+  scope->d_isScopeEnd = false;
+
+  auto envPtr = std::shared_ptr<Environment>(new Environment(scope));
+  envPtr->d_isScopeStart = false;
+  return envPtr;
+}
+
+Environment::Environment(std::shared_ptr<Environment> parent)
+    : d_parent(parent), d_isScopeStart(true), d_isScopeEnd(true) {}
 
 void Environment::assign(const std::string &name, const Value &v) {
   // Assignment dictates the var must already exist
@@ -20,9 +35,15 @@ void Environment::assign(const std::string &name, const Value &v) {
 }
 
 void Environment::define(const std::string &name, const Value &v) {
+  if (!d_isScopeEnd) {
+    throw InterpretException(
+        "Internal Lox error: Tried to define a variable '" + name +
+        "' in a non-tail Environment for the scope.");
+  }
+
   // For defining a variable Lox allows shadowing variables in higher scopes.
-  // Therefore no need to check parent scopes.
-  if (d_map.contains(name)) {
+  // We only need to check within this scope
+  if (isVarInScope(name)) {
     throw InterpretException("Cannot redefine variable: " + name);
   }
 
@@ -39,8 +60,19 @@ Value Environment::get(const std::string &name) const {
   }
 }
 
-std::shared_ptr<Environment> Environment::getParentScope() const {
-  return d_parent;
+bool Environment::isVarInScope(const std::string &name) const {
+  // Check if var is in current env
+  if (d_map.contains(name)) {
+    return true;
+  }
+
+  // Continue recursing until we hit the start of the scope
+  if (!d_isScopeStart && d_parent) {
+    return d_parent->isVarInScope(name);
+  }
+
+  // We're at the start of the scope and didn't find the var
+  return false;
 }
 
 namespace environmentutils {

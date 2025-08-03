@@ -11,19 +11,39 @@
 namespace plox {
 namespace treewalk {
 
+/*
+ Environment is a class to store variables within the program.
+
+ Environments can represent a whole scope, or part of a scope. An example where
+ representing just part of a scope can be useful is for a function declaration,
+ where the function should only be only aware of scope variables defined before
+ the function is declared.
+
+ Environments are chained as Directed Acyclic Graphs.
+*/
+
 class Environment {
 public:
-  Environment() = default;
-  Environment(std::shared_ptr<Environment> &parent);
+  // Factories
+  static std::shared_ptr<Environment>
+  create(std::shared_ptr<Environment> parent = nullptr);
+  static std::shared_ptr<Environment>
+  extend(std::shared_ptr<Environment> scope);
 
+  // Operations
   void assign(const std::string &name, const Value &v);
   void define(const std::string &name, const Value &v = {});
   Value get(const std::string &name) const;
-  std::shared_ptr<Environment> getParentScope() const;
 
 private:
+  Environment(std::shared_ptr<Environment> parent);
+
+  bool isVarInScope(const std::string &name) const;
+
   std::map<std::string, Value> d_map;
   std::shared_ptr<Environment> d_parent;
+  bool d_isScopeStart;
+  bool d_isScopeEnd;
 };
 
 namespace environmentutils {
