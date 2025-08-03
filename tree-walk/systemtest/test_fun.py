@@ -139,3 +139,25 @@ def test_function_as_arg(lox_runner):
     # THEN
     assert stdout.strip().splitlines() == ["Created by peter"]
     assert stderr == ""
+
+
+def test_fun_closure_resolve(lox_runner):
+    # GIVEN
+    code = """
+    var a = "global";
+    {
+    fun showA() {
+        print a;
+    }
+
+    var a = "block";
+    showA();
+    }
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["global"]
+    assert stderr == ""
