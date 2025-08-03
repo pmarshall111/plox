@@ -24,7 +24,7 @@ The Crafting Interpreters book walks us into a bug where a function defined with
 
 ## Book proposal
 
-The book proposes setting up a layer of static analysis between parsing and interpreting, which would count the scope distance to the defined variable and store this in a global map. For the above example, the scope distance of `a` would be 1, since it's in the scope above where `showA()` is defined. The logic proposed by the book extends `Environment` so whenever `get()` or `assign()` is called, the caller tells the environment how many scopes to traverse. The called could then ensure that whenever `showA()` is invoked it will always use the variable of `a` with a scope distance of 1, and `Environment` will ignore a shadowed version of `a` in the current scope.
+The book proposes setting up a layer of static analysis between parsing and interpreting, which would count the scope distance to the defined variable and store this in a global map. For the above example, the scope distance of `a` would be 1, since it's in the scope above where `showA()` is defined. The logic proposed by the book extends `Environment` so whenever `get()` or `assign()` is called, the caller tells the environment how many scopes to traverse. The caller could then ensure that whenever `showA()` is invoked it will always use the variable of `a` with a scope distance of 1, and `Environment` will ignore a shadowed version of `a` in the current scope.
 
 ## Alternate fix (chosen)
 
