@@ -33,7 +33,7 @@ TEST(Interpreter, smoke) {
 
   ASSERT_EQ("var myVar = ((group ((5/1)+2))*(-(-8)))",
             std::visit(stmt::PrinterVisitor{}, statements[0]));
-  auto env = std::make_shared<Environment>();
+  auto env = Environment::create();
   std::vector<InterpretException> errs;
 
   // When
@@ -54,7 +54,7 @@ TEST(Interpreter, SmokeError) {
                    Token{TokenType::MINUS, "-", 0},
                    std::make_unique<Expr>(Literal{"true", TokenType::TRUE})})});
   std::vector<InterpretException> errs;
-  auto env = std::make_shared<Environment>();
+  auto env = Environment::create();
 
   ASSERT_EQ("var myVar = (-true)",
             std::visit(stmt::PrinterVisitor{}, statements[0]));
@@ -80,7 +80,7 @@ TEST(Interpreter, UseVar) {
                       Token{TokenType::STAR, "*", 1},
                       std::make_unique<Expr>(Variable{"a"})})});
   std::vector<InterpretException> errs;
-  auto env = std::make_shared<Environment>();
+  auto env = Environment::create();
 
   ASSERT_EQ("var a = 3", std::visit(stmt::PrinterVisitor{}, statements[0]));
   ASSERT_EQ("var b = (2*(var a))",
@@ -108,7 +108,7 @@ TEST(Interpreter, ReassignVar) {
                       Token{TokenType::STAR, "*", 1},
                       std::make_unique<Expr>(Variable{"a"})})})});
   std::vector<InterpretException> errs;
-  auto env = std::make_shared<Environment>();
+  auto env = Environment::create();
 
   ASSERT_EQ("var a = 3", std::visit(stmt::PrinterVisitor{}, statements[0]));
   ASSERT_EQ("(a=(2*(var a)))",

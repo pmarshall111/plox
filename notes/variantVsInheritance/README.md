@@ -3,8 +3,9 @@
 I was trying to implement a "visitor" pattern with the motivation to have dumb generated POD classes and the logic is held in external classes.
 
 This could be done by:
+
 - the visitor pattern using inheritance
-- using std::variant. 
+- using std::variant.
 
 ## Visitor with fixed return type
 

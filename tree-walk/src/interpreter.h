@@ -15,7 +15,6 @@ void interpret(std::vector<stmt::Stmt> &stmts,
                std::shared_ptr<Environment> &env,
                std::vector<InterpretException> &errs);
 
-
 // Visitors are defined for each interpret operation.
 struct InterpreterVisitor {
   InterpreterVisitor(std::shared_ptr<Environment> &env);
