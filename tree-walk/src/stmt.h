@@ -15,6 +15,8 @@ namespace stmt {
 
 struct Block;
 
+struct Class;
+
 struct Expression;
 
 struct For;
@@ -31,11 +33,16 @@ struct VarDecl;
 
 struct While;
 
-using Stmt = std::variant<Block, Expression, For, Fun, If, Print, Return,
+using Stmt = std::variant<Block, Class, Expression, For, Fun, If, Print, Return,
                           VarDecl, While>;
 
 struct Block {
   std::vector<std::unique_ptr<stmt::Stmt>> stmts;
+};
+
+struct Class {
+  std::string_view name;
+  std::vector<std::unique_ptr<stmt::Stmt>> methods;
 };
 
 struct Expression {

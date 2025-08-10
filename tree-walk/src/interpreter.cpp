@@ -76,6 +76,10 @@ void InterpreterVisitor::operator()(const Block &blk) {
   }
 }
 
+void InterpreterVisitor::operator()(const Class &cls) {
+  // TODO
+}
+
 void InterpreterVisitor::operator()(const For &forStmt) {
   if (forStmt.initialiser) {
     std::visit(*this, *forStmt.initialiser);

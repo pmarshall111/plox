@@ -21,6 +21,7 @@ struct InterpreterVisitor {
 
   // Statements do not need to return anything
   void operator()(const stmt::Block &blk);
+  void operator()(const stmt::Class &cls);
   void operator()(const stmt::Expression &expr);
   void operator()(const stmt::For &forStmt);
   void operator()(stmt::Fun &funStmt);
