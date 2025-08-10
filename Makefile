@@ -2,7 +2,7 @@
 
 .PHONY: build
 build: 
-	mkdir -p build; cmake --build build --parallel 10
+	mkdir -p build; cmake -S . -B build; cmake --build build --parallel 10
 
 ### Running
 
