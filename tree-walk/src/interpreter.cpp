@@ -1,6 +1,7 @@
 #include <interpreter.h>
 
 #include <ast_printer.h>
+#include <class.h>
 #include <func.h>
 
 #include <charconv>
@@ -77,7 +78,19 @@ void InterpreterVisitor::operator()(const Block &blk) {
 }
 
 void InterpreterVisitor::operator()(const Class &cls) {
-  // TODO
+  // Create a new environment for the class where the methods will be defined
+  std::shared_ptr<Environment> clsEnv = Environment::create(d_env);
+
+  // Create the class factory which will be used to create instances
+  d_env->define(std::string(cls.name),
+                std::make_shared<ClassFactory>(cls.name, clsEnv));
+
+  // Set the interpreter environment to be the class environment and add the
+  // methods
+  environmentutils::ScopedSwap swapGuard(d_env, clsEnv);
+  for (auto &m : cls.methods) {
+    std::visit(*this, *m);
+  }
 }
 
 void InterpreterVisitor::operator()(const For &forStmt) {

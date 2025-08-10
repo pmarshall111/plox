@@ -3,6 +3,7 @@ find_package(CLI11 CONFIG REQUIRED)
 add_library(
   tree-walk-lib
   ast_printer.cpp
+  class.cpp
   environment.cpp
   errs.cpp
   func_native.cpp

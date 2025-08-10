@@ -10,10 +10,14 @@
 namespace plox {
 namespace treewalk {
 
+// Forward declarations for ptrs to prevent circular deps
+struct ClassFactory;
+using ClsFactShrdPtr = std::shared_ptr<ClassFactory>;
 struct Function;
 using FuncShrdPtr = std::shared_ptr<Function>;
-using Value =
-    std::variant<std::monostate, std::string, bool, double, FuncShrdPtr>;
+
+using Value = std::variant<std::monostate, std::string, bool, double,
+                           FuncShrdPtr, ClsFactShrdPtr>;
 
 // Concepts to control which template method should be chosen
 template <typename T>
