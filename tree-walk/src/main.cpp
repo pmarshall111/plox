@@ -1,6 +1,7 @@
 #include <CLI/CLI.hpp>
 #include <fstream>
 #include <iostream>
+#include <list>
 #include <optional>
 
 #include <ast_printer.h>
@@ -86,11 +87,15 @@ int runCmds(const std::string &cmds) {
 }
 
 int runRepl() {
+  // Design heavily relies on string_view. We must keep user inputs around and
+  // at the same memory address
+  std::list<std::string> userInputs;
   while (true) {
-    std::string userInput;
-    getline(std::cin, userInput);
+    std::string uInput;
+    getline(std::cin, uInput);
+    userInputs.push_back(std::move(uInput));
     try {
-      run(userInput);
+      run(userInputs.back());
     } catch (const std::exception &ex) {
       // TODO: error handling. Print?
     }
