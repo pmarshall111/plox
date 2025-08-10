@@ -5,6 +5,7 @@
 // program        → statement* EOF ;
 //
 // statement      → blockStmt
+//                | classStmt
 //                | exprStmt
 //                | funcStmt
 //                | ifStmt
@@ -14,6 +15,7 @@
 //                | whileStmt ;
 //
 // blockStmt      → "{" statement* "}" ;
+// classStmt      →  "class" IDENTIFIER "{" function* "}" ;
 // exprStmt       → expression ";" ;
 // funcStmt       → "fun" function ;
 // forStmt        → "for" "(" (varStmt | exprStmt | ";") expression? ";" expression? ")" statement ";" ;
@@ -79,6 +81,7 @@ private:
 
 std::unique_ptr<ast::Expr> expression(TokenStream &tokStream);
 std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream);
+std::unique_ptr<stmt::Stmt> funStatement(TokenStream &tokStream);
 std::unique_ptr<stmt::Stmt> varStatement(TokenStream &tokStream);
 
 std::unique_ptr<ast::Expr> primary(TokenStream &tokStream) {
@@ -255,6 +258,34 @@ std::unique_ptr<stmt::Stmt> blockStatement(TokenStream &tokStream) {
   }
 
   throw ParseException("Block has no closing brace.", blockStart);
+}
+
+std::unique_ptr<stmt::Stmt> classStatement(TokenStream &tokStream) {
+  int clsStart = tokStream.peek().line;
+  if (TokenType::IDENTIFIER != tokStream.peek().type) {
+    throw ParseException("class declaration not followed by identifier!",
+                         tokStream.peek().line);
+  }
+  auto cls = std::make_unique<stmt::Stmt>(stmt::Class{tokStream.peek().value});
+  tokStream.next();
+
+  if (TokenType::LEFT_BRACE != tokStream.peek().type) {
+    throw ParseException(
+        "class identifier needs to be followed by opening brace!",
+        tokStream.peek().line);
+  }
+  tokStream.next();
+
+  while (tokStream.hasNext()) {
+    if (TokenType::RIGHT_BRACE == tokStream.peek().type) {
+      tokStream.next();
+      return cls;
+    }
+    std::get<stmt::Class>(*cls).methods.push_back(
+        std::move(funStatement(tokStream)));
+  }
+
+  throw ParseException("Class has no closing brace.", clsStart);
 }
 
 std::unique_ptr<stmt::Stmt> exprStatement(TokenStream &tokStream) {
@@ -508,6 +539,10 @@ std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {
   case TokenType::LEFT_BRACE: {
     tokStream.next();
     return blockStatement(tokStream);
+  }
+  case TokenType::CLASS: {
+    tokStream.next();
+    return classStatement(tokStream);
   }
   case TokenType::FOR: {
     tokStream.next();
