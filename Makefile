@@ -4,6 +4,10 @@
 build: 
 	mkdir -p build; cmake -S . -B build; cmake --build build --parallel 10
 
+.PHONY: build-asan
+build-asan: 
+	mkdir -p build-asan; cmake -S . -B build-asan; cmake --build build-asan --parallel 10
+
 ### Running
 
 .PHONY: run
