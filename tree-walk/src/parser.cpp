@@ -281,6 +281,7 @@ std::unique_ptr<stmt::Stmt> classStatement(TokenStream &tokStream) {
       tokStream.next();
       return cls;
     }
+    tokStream.next();
     std::get<stmt::Class>(*cls).methods.push_back(
         std::move(funStatement(tokStream)));
   }
