@@ -84,16 +84,20 @@ void InterpreterVisitor::operator()(const Class &cls) {
   // parent
   std::shared_ptr<Environment> clsEnv = Environment::create();
 
-  // Create the class factory which will be used to create instances
-  d_env->define(std::string(cls.name),
-                std::make_shared<ClassFactory>(cls.name, clsEnv));
-
   // Set the interpreter environment to be the class environment and add the
   // methods
-  environmentutils::ScopedSwap swapGuard(d_env, clsEnv);
-  for (auto &m : cls.methods) {
-    std::visit(*this, *m);
+  {
+    environmentutils::ScopedSwap swapGuard(d_env, clsEnv);
+    for (auto &m : cls.methods) {
+      std::visit(*this, *m);
+    }
   }
+
+  // Create the class factory which will be used to create instances.
+  // Note, the function definitions will extend the current environment, so
+  // we must only use clsEnv once all functions have been defined.
+  d_env->define(std::string(cls.name),
+                std::make_shared<ClassFactory>(cls.name, clsEnv));
 }
 
 void InterpreterVisitor::operator()(const For &forStmt) {
