@@ -79,8 +79,10 @@ void InterpreterVisitor::operator()(const Block &blk) {
 }
 
 void InterpreterVisitor::operator()(const Class &cls) {
-  // Create a new environment for the class where the methods will be defined
-  std::shared_ptr<Environment> clsEnv = Environment::create(d_env);
+  // Create a new environment for the class where the methods will be defined.
+  // Note, this environment will just contain the methods, so does not need a
+  // parent
+  std::shared_ptr<Environment> clsEnv = Environment::create();
 
   // Create the class factory which will be used to create instances
   d_env->define(std::string(cls.name),
@@ -210,15 +212,8 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
   }
 }
 
-Value InterpreterVisitor::operator()(const Call &call) {
-  // Evaluate the callee. Normally this would just be a function name, but
-  // in chains we may need to evaluate a preceeding function i.e. fn(1)(2);
-  Value callee = std::visit(*this, *call.callee);
-  if (!std::holds_alternative<FuncShrdPtr>(callee)) {
-    throw InterpretException("Tried to call non callable object " +
-                             std::visit(s_valuePrinter, callee));
-  }
-  auto fShrdPtr = std::get<FuncShrdPtr>(callee);
+Value InterpreterVisitor::invoke(const FuncShrdPtr &fShrdPtr,
+                                 const Call &call) {
   if (!fShrdPtr) {
     throw InterpretException("Internal error! Function pointer is null!");
   }
@@ -253,6 +248,43 @@ Value InterpreterVisitor::operator()(const Call &call) {
     return fShrdPtr->execute(d_env, *this);
   } catch (ReturnEx ex) {
     return ex.d_val;
+  }
+}
+
+Value InterpreterVisitor::invoke(const ClsFactShrdPtr &clsFctSPtr,
+                                 const Call &call) {
+  if (!clsFctSPtr) {
+    throw InterpretException("Internal error! Class factory pointer is null!");
+  }
+
+  // TODO: Copy the functions from the Factory into a new environment.
+  // This allows users to redefine the methods for each instance (unfortunately
+  // part of the spec) and also allows methods to be bound to the class
+  // instance scope even if they're stored in a variable outside the class.
+  std::shared_ptr<Environment> clsInstEnv = Environment::create(d_env);
+  
+
+  // Pass new environment with those funcs into the ClassInstance
+  auto clsInst =
+      std::make_shared<ClassInstance>(clsFctSPtr->getName(), clsInstEnv);
+
+  // TODO: Call init function if exists
+
+  return clsInst;
+}
+
+Value InterpreterVisitor::operator()(const Call &call) {
+  // Evaluate the callee. Normally this would just be a function name, but
+  // in chains we may need to evaluate a preceeding function i.e. fn(1)(2);
+  Value callee = std::visit(*this, *call.callee);
+
+  if (std::holds_alternative<FuncShrdPtr>(callee)) {
+    return invoke(std::get<FuncShrdPtr>(callee), call);
+  } else if (std::holds_alternative<ClsFactShrdPtr>(callee)) {
+    return invoke(std::get<ClsFactShrdPtr>(callee), call);
+  } else {
+    throw InterpretException("Tried to call non callable object " +
+                             std::visit(s_valuePrinter, callee));
   }
 }
 

@@ -40,6 +40,8 @@ struct InterpreterVisitor {
   Value operator()(const ast::Variable &var);
 
 private:
+  Value invoke(const FuncShrdPtr &fnSPtr, const ast::Call &call);
+  Value invoke(const ClsFactShrdPtr &factSPtr, const ast::Call &call);
   std::shared_ptr<Environment> d_env;
 };
 
