@@ -60,6 +60,7 @@ struct Fun {
   std::string_view name;
   std::vector<std::string_view> params;
   std::vector<std::unique_ptr<stmt::Stmt>> stmts;
+  bool isMethod;
 };
 
 struct If {

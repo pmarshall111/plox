@@ -295,8 +295,9 @@ std::unique_ptr<stmt::Stmt> classStatement(TokenStream &tokStream) {
       return cls;
     }
     tokStream.next();
-    std::get<stmt::Class>(*cls).methods.push_back(
-        std::move(funStatement(tokStream)));
+    auto fun = funStatement(tokStream);
+    std::get<stmt::Fun>(*fun).isMethod = true;
+    std::get<stmt::Class>(*cls).methods.push_back(std::move(fun));
   }
 
   throw ParseException("Class has no closing brace.", clsStart);
@@ -375,7 +376,7 @@ std::unique_ptr<stmt::Stmt> funStatement(TokenStream &tokStream) {
                          tokStream.peek().line);
   }
   auto funStmt =
-      std::make_unique<stmt::Stmt>(stmt::Fun{tokStream.peek().value});
+      std::make_unique<stmt::Stmt>(stmt::Fun{tokStream.peek().value, {}, {}, false});
   tokStream.next();
 
   if (TokenType::LEFT_PAREN != tokStream.peek().type) {
