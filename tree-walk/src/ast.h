@@ -21,6 +21,8 @@ struct Binary;
 
 struct Call;
 
+struct Get;
+
 struct Grouping;
 
 struct Literal;
@@ -30,7 +32,7 @@ struct Unary;
 struct Variable;
 
 using Expr =
-    std::variant<Assign, Binary, Call, Grouping, Literal, Unary, Variable>;
+    std::variant<Assign, Binary, Call, Get, Grouping, Literal, Unary, Variable>;
 
 struct Assign {
   std::string_view name;
@@ -46,6 +48,11 @@ struct Binary {
 struct Call {
   std::unique_ptr<Expr> callee;
   std::vector<std::unique_ptr<Expr>> args;
+};
+
+struct Get {
+  std::unique_ptr<Expr> object;
+  std::string_view property;
 };
 
 struct Grouping {

@@ -34,6 +34,7 @@ struct InterpreterVisitor {
   Value operator()(const ast::Assign &assign);
   Value operator()(const ast::Binary &bin);
   Value operator()(const ast::Call &call);
+  Value operator()(const ast::Get &get);
   Value operator()(const ast::Grouping &grp);
   Value operator()(const ast::Literal &ltrl);
   Value operator()(const ast::Unary &unary);

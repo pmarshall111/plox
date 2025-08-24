@@ -111,6 +111,7 @@ if __name__ == "__main__":
         {"name": "Assign", "members": [{"type": "std::string_view", "name": "name"}, {"type": "std::unique_ptr<Expr>", "name": "value"}]},
         {"name": "Binary", "members": [{"type": "std::unique_ptr<Expr>", "name": "left"}, {"type": "Token", "name": "op"}, {"type": "std::unique_ptr<Expr>", "name": "right"}]},
         {"name": "Call", "members": [{"type": "std::unique_ptr<Expr>", "name": "callee"}, {"type": "std::vector<std::unique_ptr<Expr>>", "name": "args"}]},
+        {"name": "Get", "members": [{"type": "std::unique_ptr<Expr>", "name": "object"}, {"type": "std::string_view", "name": "property"}]},
         {"name": "Grouping", "members": [{"type": "std::unique_ptr<Expr>", "name": "expr"}]},
         {"name": "Literal", "members": [{"type": "std::string_view", "name": "value"}, {"type": "TokenType", "name": "type"}]},
         {"name": "Unary", "members": [{"type": "Token", "name": "op"}, {"type": "std::unique_ptr<Expr>", "name": "right"}]},

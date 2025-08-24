@@ -33,7 +33,7 @@
 // factor         → unary ( ( "/" | "*" ) unary )* ;
 // unary          → ( "!" | "-" ) unary
 //                | call ;
-// call           → primary ( "(" arguments? ")" )* ;
+// call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
 // primary        → NUMBER | STRING | "true" | "false" | "nil"
 //                | "(" expression ")" | IDENTIFIER ;
 
@@ -116,32 +116,45 @@ std::unique_ptr<ast::Expr> primary(TokenStream &tokStream) {
 
 std::unique_ptr<ast::Expr> call(TokenStream &tokStream) {
   auto expr = primary(tokStream);
-  if (TokenType::LEFT_PAREN != tokStream.peek().type) {
-    // Not a function call
+  if (TokenType::LEFT_PAREN != tokStream.peek().type &&
+      TokenType::DOT != tokStream.peek().type) {
+    // Not an operation on an obj
     return expr;
   }
 
-  // Loop to support for multiple call levels i.e. fn(1)(2)(3);
-  while (TokenType::LEFT_PAREN == tokStream.peek().type) {
-    tokStream.next();
-    expr = std::make_unique<ast::Expr>(ast::Call{std::move(expr)});
+  // Loop to support for multiple call levels i.e. fn(1)(2).method(3);
+  while (TokenType::LEFT_PAREN == tokStream.peek().type ||
+         TokenType::DOT == tokStream.peek().type) {
 
-    // Loop to construct arguments
-    while (TokenType::RIGHT_PAREN != tokStream.peek().type) {
-      // Args can be expressions that later need to be evaluated i.e. fn(1+2);
-      auto arg = expression(tokStream);
-      std::get<ast::Call>(*expr).args.emplace_back(std::move(arg));
+    if (TokenType::LEFT_PAREN == tokStream.peek().type) {
+      tokStream.next();
+      expr = std::make_unique<ast::Expr>(ast::Call{std::move(expr)});
+      // Loop to construct arguments
+      while (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+        // Args can be expressions that later need to be evaluated i.e. fn(1+2);
+        auto arg = expression(tokStream);
+        std::get<ast::Call>(*expr).args.emplace_back(std::move(arg));
 
-      if (TokenType::COMMA == tokStream.peek().type) {
-        tokStream.next();
-        if (TokenType::RIGHT_PAREN == tokStream.peek().type) {
-          throw ParseException("Comma must not directly precede closing paren!",
+        if (TokenType::COMMA == tokStream.peek().type) {
+          tokStream.next();
+          if (TokenType::RIGHT_PAREN == tokStream.peek().type) {
+            throw ParseException(
+                "Comma must not directly precede closing paren!",
+                tokStream.peek().line);
+          }
+        } else if (TokenType::RIGHT_PAREN != tokStream.peek().type) {
+          throw ParseException("Argument list must be comma separated!",
                                tokStream.peek().line);
         }
-      } else if (TokenType::RIGHT_PAREN != tokStream.peek().type) {
-        throw ParseException("Argument list must be comma separated!",
+      }
+    } else {
+      tokStream.next();
+      if (TokenType::IDENTIFIER != tokStream.peek().type) {
+        throw ParseException("object get not followed by identifier!",
                              tokStream.peek().line);
       }
+      expr = std::make_unique<ast::Expr>(
+          ast::Get{std::move(expr), tokStream.peek().value});
     }
     tokStream.next();
   }

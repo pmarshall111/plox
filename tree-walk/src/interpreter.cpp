@@ -300,6 +300,18 @@ Value InterpreterVisitor::operator()(const Call &call) {
   }
 }
 
+Value InterpreterVisitor::operator()(const Get &get) {
+  // Retrieve the object we're getting from
+  Value obj = std::visit(*this, *get.object);
+  if (!std::holds_alternative<ClsInstShrdPtr>(obj)) {
+    throw InterpretException("Tried to get a property on non class instance " +
+                             std::visit(s_valuePrinter, obj));
+  }
+
+  auto clsInst = std::get<ClsInstShrdPtr>(obj);
+  return clsInst->getClosure()->get(std::string(get.property));
+}
+
 Value InterpreterVisitor::operator()(const Grouping &grp) {
   return std::visit(*this, *grp.expr);
 }
