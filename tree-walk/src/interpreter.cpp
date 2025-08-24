@@ -3,6 +3,7 @@
 #include <ast_printer.h>
 #include <class.h>
 #include <func.h>
+#include <value_printer.h>
 
 #include <charconv>
 #include <iostream>
