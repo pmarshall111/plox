@@ -52,6 +52,14 @@ void Environment::define(const std::string &name, const Value &v) {
   d_map[name] = v;
 }
 
+void Environment::upsert(const std::string &name, const Value &v) {
+  if (isVarInScope(name)) {
+    return assign(name, v);
+  }
+
+  return define(name, v);
+}
+
 Value Environment::get(const std::string &name) const {
   if (d_map.contains(name)) {
     return d_map.at(name);

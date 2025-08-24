@@ -35,6 +35,7 @@ public:
   // Operations
   void assign(const std::string &name, const Value &v);
   void define(const std::string &name, const Value &v = {});
+  void upsert(const std::string &name, const Value &v);
   Value get(const std::string &name) const;
 
   // Iterators

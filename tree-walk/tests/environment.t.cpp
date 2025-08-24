@@ -33,6 +33,20 @@ TEST(Environment, AssignAndGet) {
   EXPECT_EQ(envPtr->get("x"), updated);
 }
 
+TEST(Environment, UpsertAndGet) {
+  // GIVEN
+  auto envPtr = Environment::create();
+  Value initial = 42.0;
+  Value updated = "hi";
+
+  // WHEN
+  envPtr->upsert("x", initial);
+  envPtr->upsert("x", updated);
+
+  // THEN
+  EXPECT_EQ(envPtr->get("x"), updated);
+}
+
 TEST(Environment, GetFromParentEnv) {
   // GIVEN
   auto parentPtr = Environment::create();
