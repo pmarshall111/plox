@@ -13,11 +13,11 @@ struct ClassInstance;
 using ClsInstShrdPtr = std::shared_ptr<ClassInstance>;
 struct ClassFactory;
 using ClsFactShrdPtr = std::shared_ptr<ClassFactory>;
-struct Function;
-using FuncShrdPtr = std::shared_ptr<Function>;
+struct FunctionClosure;
+using FnClosureShrdPtr = std::shared_ptr<FunctionClosure>;
 
 using Value = std::variant<std::monostate, std::string, bool, double,
-                           FuncShrdPtr, ClsFactShrdPtr, ClsInstShrdPtr>;
+                           FnClosureShrdPtr, ClsFactShrdPtr, ClsInstShrdPtr>;
 
 } // namespace treewalk
 } // namespace plox

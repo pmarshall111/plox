@@ -120,8 +120,10 @@ void InterpreterVisitor::operator()(const For &forStmt) {
 
 void InterpreterVisitor::operator()(Fun &funStmt) {
   // Create a function object and store it in the current env
-  auto f = std::make_shared<Function>(funStmt.name, std::move(funStmt.params),
-                                      d_env, std::move(funStmt.stmts));
+  auto f = std::make_shared<FunctionClosure>(
+      funStmt.name, d_env,
+      std::make_shared<Function>(std::move(funStmt.params),
+                                 std::move(funStmt.stmts)));
   d_env->define(std::string(funStmt.name), f);
 
   // Extend scope so this function can have an Environment with only the
@@ -212,27 +214,32 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
   }
 }
 
-Value InterpreterVisitor::invoke(const FuncShrdPtr &fShrdPtr,
+Value InterpreterVisitor::invoke(const FnClosureShrdPtr &fnClzrSPtr,
                                  const Call &call) {
-  if (!fShrdPtr) {
+  if (!fnClzrSPtr) {
+    throw InterpretException(
+        "Internal error! Function closure pointer is null!");
+  }
+  auto fnSPtr = fnClzrSPtr->getFunction();
+  if (!fnSPtr) {
     throw InterpretException("Internal error! Function pointer is null!");
   }
 
   // Check if the number of args matches the callee args
-  if (call.args.size() != fShrdPtr->getArity()) {
+  if (call.args.size() != fnSPtr->getArity()) {
     std::ostringstream ss;
-    ss << "Tried to call " << fShrdPtr->getName() << " with "
+    ss << "Tried to call " << fnClzrSPtr->getName() << " with "
        << call.args.size() << " args when function accepts "
-       << fShrdPtr->getArity() << " args.";
+       << fnSPtr->getArity() << " args.";
     throw InterpretException(ss.str());
   }
 
   // Create a new environment for the func to execute in
   std::shared_ptr<Environment> fEnv =
-      Environment::create(fShrdPtr->getClosure());
+      Environment::create(fnClzrSPtr->getClosure());
 
   // Set args in new environment
-  const std::vector<std::string_view> &fArgNames = fShrdPtr->getArgNames();
+  const std::vector<std::string_view> &fArgNames = fnSPtr->getArgNames();
   for (int i = 0; i < call.args.size(); i++) {
     Value v = std::visit(*this, *call.args[i]);
     fEnv->define(std::string(fArgNames[i]), v);
@@ -245,7 +252,7 @@ Value InterpreterVisitor::invoke(const FuncShrdPtr &fShrdPtr,
   try {
     // Pass execution to function. If the user has written a return statement it
     // will throw and be caught below
-    return fShrdPtr->execute(d_env, *this);
+    return fnSPtr->execute(d_env, *this);
   } catch (ReturnEx ex) {
     return ex.d_val;
   }
@@ -257,12 +264,17 @@ Value InterpreterVisitor::invoke(const ClsFactShrdPtr &clsFctSPtr,
     throw InterpretException("Internal error! Class factory pointer is null!");
   }
 
-  // TODO: Copy the functions from the Factory into a new environment.
+  // Copy the functions from the Factory into a new environment.
   // This allows users to redefine the methods for each instance (unfortunately
   // part of the spec) and also allows methods to be bound to the class
   // instance scope even if they're stored in a variable outside the class.
   std::shared_ptr<Environment> clsInstEnv = Environment::create(d_env);
-  
+  for (const auto &[k, v] : *clsFctSPtr->getClosure()) {
+    auto fnClzrCpy =
+        std::make_shared<FunctionClosure>(*std::get<FnClosureShrdPtr>(v));
+    fnClzrCpy->getClosure() = clsInstEnv;
+    clsInstEnv->define(k, fnClzrCpy);
+  }
 
   // Pass new environment with those funcs into the ClassInstance
   auto clsInst =
@@ -278,8 +290,8 @@ Value InterpreterVisitor::operator()(const Call &call) {
   // in chains we may need to evaluate a preceeding function i.e. fn(1)(2);
   Value callee = std::visit(*this, *call.callee);
 
-  if (std::holds_alternative<FuncShrdPtr>(callee)) {
-    return invoke(std::get<FuncShrdPtr>(callee), call);
+  if (std::holds_alternative<FnClosureShrdPtr>(callee)) {
+    return invoke(std::get<FnClosureShrdPtr>(callee), call);
   } else if (std::holds_alternative<ClsFactShrdPtr>(callee)) {
     return invoke(std::get<ClsFactShrdPtr>(callee), call);
   } else {
