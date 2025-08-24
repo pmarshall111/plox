@@ -90,6 +90,35 @@ TEST(Environment, multipleEnvForScope) {
   EXPECT_THROW(tailOfScope->define("y", "abc"), InterpretException);
 }
 
+TEST(Environment, iteratorMultiLevel) {
+  // GIVEN
+  auto scopePtr = Environment::create();
+  scopePtr->define("x", 12.0);
+  auto scopePtr1 = Environment::create(scopePtr);
+  scopePtr1->define("y", 50.0);
+  scopePtr1->define("y2", 52.0);
+  auto scopePtr2 = Environment::extend(scopePtr1);
+  auto scopePtr3 = Environment::extend(scopePtr2);
+  scopePtr3->define("z", 15.0);
+
+  std::vector<std::pair<const std::string, Value>> expected = {
+      {"z", 15.0}, {"y", 50.0}, {"y2", 52.0}, {"x", 12.0}};
+
+  // THEN
+  EXPECT_TRUE(std::equal(scopePtr3->begin(), scopePtr3->end(), expected.begin(),
+                         expected.end()));
+}
+
+TEST(Environment, iteratorEmptyObj) {
+  // GIVEN
+  auto scopePtr = Environment::create();
+  std::vector<std::pair<const std::string, Value>> expected;
+
+  // THEN
+  EXPECT_TRUE(std::equal(scopePtr->begin(), scopePtr->end(), expected.begin(),
+                         expected.end()));
+}
+
 } // namespace test
 } // namespace treewalk
 } // namespace plox
