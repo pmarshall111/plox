@@ -26,7 +26,7 @@
 // whileStmt      → "while" "(" expression ")" statement ";" ;
 
 // expression     → assignment ;
-// assignment     → IDENTIFIER "=" assignment | equality ;
+// assignment     → ( call "." ) ? IDENTIFIER "=" assignment | equality ;
 // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 // comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 // term           → factor ( ( "-" | "+" ) factor )* ;
@@ -242,13 +242,19 @@ std::unique_ptr<ast::Expr> assignment(TokenStream &tokStream) {
 
   if (TokenType::EQUAL == tokStream.peek().type) {
     tokStream.next();
-    if (!std::holds_alternative<ast::Variable>(*exp)) {
-      throw ParseException("Cannot assign to r-value", tokStream.peek().line);
+    auto val = assignment(tokStream);
+    if (std::holds_alternative<ast::Get>(*exp)) {
+      auto &get = std::get<ast::Get>(*exp);
+      return std::make_unique<ast::Expr>(
+          ast::Set{std::move(get.object), get.property, std::move(val)});
     }
 
-    std::string_view name = std::get<ast::Variable>(*exp).name;
-    return std::make_unique<ast::Expr>(
-        ast::Assign{name, assignment(tokStream)});
+    if (std::holds_alternative<ast::Variable>(*exp)) {
+      std::string_view name = std::get<ast::Variable>(*exp).name;
+      return std::make_unique<ast::Expr>(ast::Assign{name, std::move(val)});
+    }
+
+    throw ParseException("Cannot assign to r-value", tokStream.peek().line);
   }
 
   return exp;
@@ -375,8 +381,8 @@ std::unique_ptr<stmt::Stmt> funStatement(TokenStream &tokStream) {
     throw ParseException("fun declaration not followed by identifier!",
                          tokStream.peek().line);
   }
-  auto funStmt =
-      std::make_unique<stmt::Stmt>(stmt::Fun{tokStream.peek().value, {}, {}, false});
+  auto funStmt = std::make_unique<stmt::Stmt>(
+      stmt::Fun{tokStream.peek().value, {}, {}, false});
   tokStream.next();
 
   if (TokenType::LEFT_PAREN != tokStream.peek().type) {

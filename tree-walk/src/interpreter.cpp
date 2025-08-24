@@ -128,8 +128,8 @@ void InterpreterVisitor::operator()(Fun &funStmt) {
 
   if (!funStmt.isMethod) {
     // Extend scope so this function can have an Environment with only the
-    // currently defined vars for the scope. Note, methods should know about everything
-    // within the class so we don't extend in this case.
+    // currently defined vars for the scope. Note, methods should know about
+    // everything within the class so we don't extend in this case.
     std::shared_ptr<Environment> scopeExt = Environment::extend(d_env);
     std::swap(d_env, scopeExt);
   }
@@ -354,6 +354,19 @@ Value InterpreterVisitor::operator()(const Literal &ltrl) {
     throw InterpretException("Unable to interpret type: " +
                              tokenutils::tokenTypeToStr(ltrl.type));
   }
+}
+
+Value InterpreterVisitor::operator()(const Set &set) {
+  Value obj = std::visit(*this, *set.object);
+  if (!std::holds_alternative<ClsInstShrdPtr>(obj)) {
+    throw InterpretException("Tried to set a property on non class instance " +
+                             std::visit(s_valuePrinter, obj));
+  }
+
+  Value val = std::visit(*this, *set.value);
+  std::get<ClsInstShrdPtr>(obj)->getClosure()->upsert(std::string(set.property),
+                                                      val);
+  return {};
 }
 
 Value InterpreterVisitor::operator()(const Unary &unry) {

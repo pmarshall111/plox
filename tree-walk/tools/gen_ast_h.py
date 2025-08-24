@@ -114,6 +114,7 @@ if __name__ == "__main__":
         {"name": "Get", "members": [{"type": "std::unique_ptr<Expr>", "name": "object"}, {"type": "std::string_view", "name": "property"}]},
         {"name": "Grouping", "members": [{"type": "std::unique_ptr<Expr>", "name": "expr"}]},
         {"name": "Literal", "members": [{"type": "std::string_view", "name": "value"}, {"type": "TokenType", "name": "type"}]},
+        {"name": "Set", "members": [{"type": "std::unique_ptr<Expr>", "name": "object"}, {"type": "std::string_view", "name": "property"}, {"type": "std::unique_ptr<Expr>", "name": "value"}]},
         {"name": "Unary", "members": [{"type": "Token", "name": "op"}, {"type": "std::unique_ptr<Expr>", "name": "right"}]},
         {"name": "Variable", "members": [{"type": "std::string_view", "name": "name"}]}
     ])

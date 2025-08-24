@@ -50,6 +50,13 @@ std::string PrinterVisitor::operator()(const Literal &ltrl) {
   return std::string(ltrl.value);
 }
 
+std::string PrinterVisitor::operator()(const Set &set) {
+  std::ostringstream ss;
+  ss << std::visit(*this, *set.object) << "." << set.property << "="
+     << std::visit(*this, *set.value);
+  return addParens(ss.str());
+}
+
 std::string PrinterVisitor::operator()(const Unary &unary) {
   std::ostringstream ss;
   ss << unary.op.value << std::visit(*this, *unary.right);
