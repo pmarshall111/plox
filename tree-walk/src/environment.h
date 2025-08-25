@@ -8,8 +8,6 @@
 #include <string>
 #include <variant>
 
-#include <iterator>
-
 namespace plox {
 namespace treewalk {
 
@@ -24,7 +22,7 @@ namespace treewalk {
  Environments are chained as Directed Acyclic Graphs.
 */
 
-class Environment : public std::enable_shared_from_this<Environment> {
+class Environment {
 public:
   // Factories
   static std::shared_ptr<Environment>
@@ -39,27 +37,8 @@ public:
   Value get(const std::string &name) const;
 
   // Iterators
-  class const_iterator {
-  public:
-    using difference_type = std::ptrdiff_t;
-    using value_type = std::pair<const std::string, Value>;
-
-    const_iterator(std::shared_ptr<const Environment> env, bool isEnd);
-    const_iterator() = default;
-
-    const value_type &operator*() const;
-    const_iterator &operator++();
-    const_iterator operator++(int);
-    bool operator==(const const_iterator &) const = default;
-
-  private:
-    std::shared_ptr<const Environment> d_env;
-    std::map<std::string, Value>::const_iterator d_current;
-  };
-  static_assert(std::forward_iterator<const_iterator>);
-
-  const_iterator begin() const;
-  const_iterator end() const;
+  std::map<std::string, Value>::const_iterator begin() const;
+  std::map<std::string, Value>::const_iterator end() const;
 
 private:
   Environment(std::shared_ptr<Environment> parent);

@@ -80,9 +80,9 @@ void InterpreterVisitor::operator()(const Block &blk) {
 
 void InterpreterVisitor::operator()(const Class &cls) {
   // Create a new environment for the class where the methods will be defined.
-  // Note, this environment will just contain the methods, so does not need a
-  // parent
-  std::shared_ptr<Environment> clsEnv = Environment::create();
+  // Note, a class maintains scope at the point of definition, so we capture
+  // the current environment here.
+  std::shared_ptr<Environment> clsEnv = Environment::create(d_env);
 
   // Create the class factory which will be used to create instances.
   d_env->define(std::string(cls.name),
@@ -271,12 +271,13 @@ Value InterpreterVisitor::invoke(const ClsFactShrdPtr &clsFctSPtr,
   // This allows users to redefine the methods for each instance (unfortunately
   // part of the spec) and also allows methods to be bound to the class
   // instance scope even if they're stored in a variable outside the class.
-  std::shared_ptr<Environment> clsInstEnv = Environment::create(d_env);
-  for (const auto &[k, v] : *clsFctSPtr->getClosure()) {
+  auto clsInstEnv =
+      std::shared_ptr<Environment>(new Environment(*clsFctSPtr->getClosure()));
+  for (const auto &[k, v] : *clsInstEnv) {
     auto fnClzrCpy =
         std::make_shared<FunctionClosure>(*std::get<FnClosureShrdPtr>(v));
     fnClzrCpy->getClosure() = clsInstEnv;
-    clsInstEnv->define(k, fnClzrCpy);
+    clsInstEnv->assign(k, fnClzrCpy);
   }
 
   // Pass new environment with those funcs into the ClassInstance

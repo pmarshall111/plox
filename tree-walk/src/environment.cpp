@@ -2,8 +2,6 @@
 
 #include <errs.h>
 
-#include <assert.h>
-
 namespace plox {
 namespace treewalk {
 
@@ -85,60 +83,12 @@ bool Environment::isVarInScope(const std::string &name) const {
   return false;
 }
 
-Environment::const_iterator::const_iterator(
-    std::shared_ptr<const Environment> env, bool isEnd)
-    : d_env(env) {
-  assert(env != nullptr);
-
-  if (isEnd) {
-    while (d_env->d_parent) {
-      d_env = d_env->d_parent;
-    }
-    d_current = d_env->d_map.cend();
-  } else {
-    while (d_env->d_map.size() == 0 && d_env->d_parent) {
-      d_env = d_env->d_parent;
-    }
-    d_current = d_env->d_map.cbegin();
-  }
+std::map<std::string, Value>::const_iterator Environment::begin() const {
+  return d_map.cbegin();
 }
 
-const std::pair<const std::string, Value> &
-Environment::const_iterator::operator*() const {
-  return *d_current;
-}
-
-Environment::const_iterator &Environment::const_iterator::operator++() {
-  if (++d_current != d_env->d_map.cend()) {
-    return *this;
-  }
-
-  while (d_current == d_env->d_map.cend() && d_env->d_parent) {
-    d_env = d_env->d_parent;
-    d_current = d_env->d_map.cbegin();
-  }
-  return *this;
-}
-
-Environment::const_iterator Environment::const_iterator::operator++(int) {
-  Environment::const_iterator cpy = *this;
-  if (++d_current != d_env->d_map.cend()) {
-    return cpy;
-  }
-
-  while (d_current == d_env->d_map.cend() && d_env->d_parent) {
-    d_env = d_env->d_parent;
-    d_current = d_env->d_map.cbegin();
-  }
-  return cpy;
-}
-
-Environment::const_iterator Environment::begin() const {
-  return Environment::const_iterator(shared_from_this(), false);
-}
-
-Environment::const_iterator Environment::end() const {
-  return Environment::const_iterator(shared_from_this(), true);
+std::map<std::string, Value>::const_iterator Environment::end() const {
+  return d_map.cend();
 }
 
 namespace environmentutils {

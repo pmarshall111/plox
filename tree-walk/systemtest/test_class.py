@@ -23,6 +23,32 @@ def test_class(lox_runner):
     assert stderr == ""
 
 
+def test_class_takes_scope_of_definition(lox_runner):
+    # GIVEN
+    code = """
+    var global = "global";
+    {
+        class Greeter {
+            fun printGlobal() {
+                print global;
+            }
+        }
+
+        {
+            var global = "scope";
+            Greeter().printGlobal();
+        }
+    }
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["global"]
+    assert stderr == ""
+
+
 def test_bound_method_stored_as_var(lox_runner):
     # GIVEN
     code = """
