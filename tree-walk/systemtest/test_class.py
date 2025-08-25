@@ -108,3 +108,25 @@ def test_bound_method_set_on_other_class(lox_runner):
     # THEN
     assert stdout.strip().splitlines() == ["Visitor says -.-", "Visitor says -.-"]
     assert stderr == ""
+
+
+def test_class_takes_scope_of_definition(lox_runner):
+    # GIVEN
+    code = """
+    class Greeter {
+        fun printMsg() {
+            print this.msg;
+        }
+    }
+
+    var greeter = Greeter();
+    greeter.msg = "Hello there!";
+    greeter.printMsg();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["Hello there!"]
+    assert stderr == ""

@@ -284,6 +284,9 @@ Value InterpreterVisitor::invoke(const ClsFactShrdPtr &clsFctSPtr,
   auto clsInst =
       std::make_shared<ClassInstance>(clsFctSPtr->getName(), clsInstEnv);
 
+  // Set "this" in class env
+  clsInstEnv->define("this", clsInst);
+
   // TODO: Call init function if exists
 
   return clsInst;
