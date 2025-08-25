@@ -130,3 +130,65 @@ def test_class_takes_scope_of_definition(lox_runner):
     # THEN
     assert stdout.strip().splitlines() == ["Hello there!"]
     assert stderr == ""
+
+
+def test_class_init(lox_runner):
+    # GIVEN
+    code = """
+    class Foo {
+        fun init() {
+            print "init";
+        }
+    }
+
+    var foo = Foo();
+    var fooInited = foo.init();
+    fooInited.init();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["init", "init", "init"]
+    assert stderr == ""
+
+
+def test_class_init_explicit_return(lox_runner):
+    # GIVEN
+    code = """
+    class Foo {
+        fun init() {
+            return 1;
+        }
+    }
+
+    Foo();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == []
+    assert "No explicit return" in stderr.strip()
+
+
+def test_class_init_explicit_return_no_val_is_ok(lox_runner):
+    # GIVEN
+    code = """
+    class Foo {
+        fun init() {
+            return;
+        }
+    }
+
+    Foo();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == []
+    assert stderr == ""

@@ -38,11 +38,17 @@ FunctionClosure::FunctionClosure(std::string_view name,
 
 std::string_view FunctionClosure::getName() const { return d_name; }
 
+void FunctionClosure::setName(std::string_view name) { d_name = name; }
+
 std::shared_ptr<Environment> &FunctionClosure::getClosure() {
   return d_closure;
 }
 
 std::shared_ptr<Function> &FunctionClosure::getFunction() { return d_fn; }
+
+bool FunctionClosure::isInitialiser() const { return d_isInitialiser; }
+
+void FunctionClosure::setIsInitialiser(bool b) { d_isInitialiser = b; }
 
 std::ostream &operator<<(std::ostream &os, const Function &fn) {
   os << "(";

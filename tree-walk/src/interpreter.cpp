@@ -132,6 +132,8 @@ void InterpreterVisitor::operator()(Fun &funStmt) {
     // everything within the class so we don't extend in this case.
     std::shared_ptr<Environment> scopeExt = Environment::extend(d_env);
     std::swap(d_env, scopeExt);
+  } else if (funStmt.name == "init") {
+    f->setIsInitialiser(true);
   }
 }
 
@@ -252,6 +254,20 @@ Value InterpreterVisitor::invoke(const FnClosureShrdPtr &fnClzrSPtr,
   // destruction
   environmentutils::ScopedSwap swapGuard(d_env, fEnv);
 
+  // Special behaviour for initialisers - always return "this"
+  if (fnClzrSPtr->isInitialiser()) {
+    Value _this = fnClzrSPtr->getClosure()->get("this");
+    try {
+      fnSPtr->execute(d_env, *this);
+    } catch (ReturnEx ex) {
+      if (!std::holds_alternative<std::monostate>(ex.d_val)) {
+        throw InterpretException(
+            "No explicit return allowed from a class initialiser");
+      }
+    }
+    return _this;
+  }
+
   try {
     // Pass execution to function. If the user has written a return statement it
     // will throw and be caught below
@@ -287,7 +303,10 @@ Value InterpreterVisitor::invoke(const ClsFactShrdPtr &clsFctSPtr,
   // Set "this" in class env
   clsInstEnv->define("this", clsInst);
 
-  // TODO: Call init function if exists
+  // Call init function if exists
+  if (clsInstEnv->isVarInScope("init")) {
+    invoke(std::get<FnClosureShrdPtr>(clsInstEnv->get("init")), call);
+  }
 
   return clsInst;
 }
@@ -368,6 +387,14 @@ Value InterpreterVisitor::operator()(const Set &set) {
   }
 
   Value val = std::visit(*this, *set.value);
+  // Create a copy of the function and rename it
+  if (std::holds_alternative<FnClosureShrdPtr>(val)) {
+    FnClosureShrdPtr fnCopy =
+        std::make_shared<FunctionClosure>(*std::get<FnClosureShrdPtr>(val));
+    fnCopy->setName(set.property);
+    fnCopy->setIsInitialiser(set.property == "init");
+    val = fnCopy;
+  }
   std::get<ClsInstShrdPtr>(obj)->getClosure()->upsert(std::string(set.property),
                                                       val);
   return {};

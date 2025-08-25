@@ -35,6 +35,7 @@ public:
   void define(const std::string &name, const Value &v = {});
   void upsert(const std::string &name, const Value &v);
   Value get(const std::string &name) const;
+  bool isVarInScope(const std::string &name) const;
 
   // Iterators
   std::map<std::string, Value>::const_iterator begin() const;
@@ -42,8 +43,6 @@ public:
 
 private:
   Environment(std::shared_ptr<Environment> parent);
-
-  bool isVarInScope(const std::string &name) const;
 
   std::map<std::string, Value> d_map;
   std::shared_ptr<Environment> d_parent;

@@ -35,13 +35,17 @@ public:
                   std::shared_ptr<Function> fn);
 
   std::string_view getName() const;
+  void setName(std::string_view name);
   std::shared_ptr<Environment> &getClosure();
   std::shared_ptr<Function> &getFunction(); // TODO: make const
+  bool isInitialiser() const;
+  void setIsInitialiser(bool b);
 
 private:
   std::string_view d_name;
   std::shared_ptr<Environment> d_closure;
   std::shared_ptr<Function> d_fn;
+  bool d_isInitialiser;
 };
 
 std::ostream &operator<<(std::ostream &os, const Function &fn);

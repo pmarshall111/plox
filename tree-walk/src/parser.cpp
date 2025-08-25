@@ -95,7 +95,7 @@ std::unique_ptr<ast::Expr> primary(TokenStream &tokStream) {
     tokStream.next();
     return std::make_unique<ast::Expr>(ast::Literal{tok.value, tok.type});
   }
-  case TokenType::IDENTIFIER: 
+  case TokenType::IDENTIFIER:
   case TokenType::THIS: {
     tokStream.next();
     return std::make_unique<ast::Expr>(ast::Variable{tok.value});
