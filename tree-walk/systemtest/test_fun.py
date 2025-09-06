@@ -43,7 +43,7 @@ def test_fun_fewer_args(lox_runner):
 
     # THEN
     assert stdout.strip().splitlines() == []
-    assert "accepts 1 args" in stderr.strip()
+    assert "accepts 1 args" in stderr
 
 
 def test_fun_more_args(lox_runner):
@@ -59,7 +59,7 @@ def test_fun_more_args(lox_runner):
 
     # THEN
     assert stdout.strip().splitlines() == []
-    assert "accepts 1 args" in stderr.strip()
+    assert "accepts 1 args" in stderr
 
 
 def test_fun_return(lox_runner):

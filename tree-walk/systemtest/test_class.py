@@ -216,7 +216,7 @@ def test_class_init_explicit_return(lox_runner):
 
     # THEN
     assert stdout.strip().splitlines() == []
-    assert "No explicit return" in stderr.strip()
+    assert "No explicit return" in stderr
 
 
 def test_class_init_explicit_return_no_val_is_ok(lox_runner):
