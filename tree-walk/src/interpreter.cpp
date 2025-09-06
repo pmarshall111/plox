@@ -132,7 +132,8 @@ void InterpreterVisitor::operator()(Fun &funStmt) {
     // everything within the class so we don't extend in this case.
     std::shared_ptr<Environment> scopeExt = Environment::extend(d_env);
     std::swap(d_env, scopeExt);
-  } else if (funStmt.name == "init") {
+  }
+  if (funStmt.isMethod && funStmt.name == "init") {
     f->setIsInitialiser(true);
   }
 }
