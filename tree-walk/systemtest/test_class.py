@@ -2,10 +2,10 @@ def test_class(lox_runner):
     # GIVEN
     code = """
     class Test {
-        fun printA() {
+        printA() {
             print "a";
         }
-        fun printB() {
+        printB() {
             print "b";
         }
     }
@@ -29,7 +29,7 @@ def test_class_takes_scope_of_definition(lox_runner):
     var global = "global";
     {
         class Greeter {
-            fun printGlobal() {
+            printGlobal() {
                 print global;
             }
         }
@@ -53,10 +53,10 @@ def test_bound_method_stored_as_var(lox_runner):
     # GIVEN
     code = """
     class Greeter {
-        fun getName() {
+        getName() {
             return "Greeter";
         }
-        fun sayHi() {
+        sayHi() {
             print getName() + " says hi!";
         }
     }
@@ -77,19 +77,19 @@ def test_bound_method_set_on_other_class(lox_runner):
     # GIVEN
     code = """
     class Greeter {
-        fun getName() {
+        getName() {
             return "Greeter";
         }
-        fun sayHi() {
+        sayHi() {
             print getName() + " says hi!";
         }
     }
 
     class Visitor {
-        fun getName() {
+        getName() {
             return "Visitor";
         }
-        fun sayHi() {
+        sayHi() {
             print getName() + " says -.-"; 
         }
     }
@@ -114,7 +114,7 @@ def test_class_takes_scope_of_definition(lox_runner):
     # GIVEN
     code = """
     class Greeter {
-        fun printMsg() {
+        printMsg() {
             print this.msg;
         }
     }
@@ -136,7 +136,7 @@ def test_class_init(lox_runner):
     # GIVEN
     code = """
     class Foo {
-        fun init() {
+        init() {
             print "init";
         }
     }
@@ -158,7 +158,7 @@ def test_class_init_explicit_return(lox_runner):
     # GIVEN
     code = """
     class Foo {
-        fun init() {
+        init() {
             return 1;
         }
     }
@@ -178,7 +178,7 @@ def test_class_init_explicit_return_no_val_is_ok(lox_runner):
     # GIVEN
     code = """
     class Foo {
-        fun init() {
+        init() {
             return;
         }
     }

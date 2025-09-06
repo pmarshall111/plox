@@ -301,7 +301,6 @@ std::unique_ptr<stmt::Stmt> classStatement(TokenStream &tokStream) {
       tokStream.next();
       return cls;
     }
-    tokStream.next();
     auto fun = funStatement(tokStream);
     std::get<stmt::Fun>(*fun).isMethod = true;
     std::get<stmt::Class>(*cls).methods.push_back(std::move(fun));
