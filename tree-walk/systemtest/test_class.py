@@ -110,7 +110,7 @@ def test_bound_method_set_on_other_class(lox_runner):
     assert stderr == ""
 
 
-def test_class_takes_scope_of_definition(lox_runner):
+def test_class_fields(lox_runner):
     # GIVEN
     code = """
     class Greeter {
