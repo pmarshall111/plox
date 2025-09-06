@@ -260,7 +260,7 @@ Value InterpreterVisitor::invoke(const FnMetdataShrdPtr &fnMdtaSPtr,
     Value _this = fnMdtaSPtr->getClosure()->get("this");
     try {
       fnSPtr->execute(d_env, *this);
-    } catch (ReturnEx ex) {
+    } catch (ReturnEx &ex) {
       if (!std::holds_alternative<std::monostate>(ex.d_val)) {
         throw InterpretException(
             "No explicit return allowed from a class initialiser");
@@ -273,7 +273,7 @@ Value InterpreterVisitor::invoke(const FnMetdataShrdPtr &fnMdtaSPtr,
     // Pass execution to function. If the user has written a return statement it
     // will throw and be caught below
     return fnSPtr->execute(d_env, *this);
-  } catch (ReturnEx ex) {
+  } catch (ReturnEx &ex) {
     return ex.d_val;
   }
 }
