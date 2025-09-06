@@ -297,14 +297,10 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsFctSPtr,
     clsInstEnv->assign(k, fnClzrCpy);
   }
 
-  // Pass new environment with those funcs into the ClassInstance
   auto clsInst =
       std::make_shared<ClassInstance>(clsFctSPtr->getName(), clsInstEnv);
-
-  // Set "this" in class env
   clsInstEnv->define("this", clsInst);
 
-  // Call init function if exists
   if (clsInstEnv->isVarInScope("init")) {
     invoke(std::get<FnMetdataShrdPtr>(clsInstEnv->get("init")), call);
   }
