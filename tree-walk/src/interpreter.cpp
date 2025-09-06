@@ -90,10 +90,16 @@ void InterpreterVisitor::operator()(const Class &cls) {
 
   // Set the interpreter environment to be the class environment and add the
   // methods
-  environmentutils::ScopedSwap swapGuard(d_env, clsEnv);
-  for (auto &m : cls.methods) {
-    std::visit(*this, *m);
+  {
+    environmentutils::ScopedSwap swapGuard(d_env, clsEnv);
+    for (auto &m : cls.methods) {
+      std::visit(*this, *m);
+    }
   }
+
+  // Now extend the current environment so variables defined after this don't
+  // get defined in the Environment captured by the Class
+  d_env = Environment::extend(d_env);
 }
 
 void InterpreterVisitor::operator()(const For &forStmt) {

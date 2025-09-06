@@ -49,6 +49,26 @@ def test_class_takes_scope_of_definition(lox_runner):
     assert stderr == ""
 
 
+def test_class_env_does_not_use_vars_defined_after_class(lox_runner):
+    # GIVEN
+    code = """
+    class Greeter {
+        printGlobal() {
+            print global;
+        }
+    }
+    var global = "global";
+    Greeter().printGlobal();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == []
+    assert "Unknown variable" in stderr
+
+
 def test_bound_method_stored_as_var(lox_runner):
     # GIVEN
     code = """
