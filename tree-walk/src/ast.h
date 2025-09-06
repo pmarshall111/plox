@@ -21,16 +21,20 @@ struct Binary;
 
 struct Call;
 
+struct Get;
+
 struct Grouping;
 
 struct Literal;
+
+struct Set;
 
 struct Unary;
 
 struct Variable;
 
-using Expr =
-    std::variant<Assign, Binary, Call, Grouping, Literal, Unary, Variable>;
+using Expr = std::variant<Assign, Binary, Call, Get, Grouping, Literal, Set,
+                          Unary, Variable>;
 
 struct Assign {
   std::string_view name;
@@ -48,6 +52,11 @@ struct Call {
   std::vector<std::unique_ptr<Expr>> args;
 };
 
+struct Get {
+  std::unique_ptr<Expr> object;
+  std::string_view property;
+};
+
 struct Grouping {
   std::unique_ptr<Expr> expr;
 };
@@ -55,6 +64,12 @@ struct Grouping {
 struct Literal {
   std::string_view value;
   TokenType type;
+};
+
+struct Set {
+  std::unique_ptr<Expr> object;
+  std::string_view property;
+  std::unique_ptr<Expr> value;
 };
 
 struct Unary {

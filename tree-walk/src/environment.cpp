@@ -50,6 +50,14 @@ void Environment::define(const std::string &name, const Value &v) {
   d_map[name] = v;
 }
 
+void Environment::upsertInScope(const std::string &name, const Value &v) {
+  if (isVarInScope(name)) {
+    return assign(name, v);
+  }
+
+  return define(name, v);
+}
+
 Value Environment::get(const std::string &name) const {
   if (d_map.contains(name)) {
     return d_map.at(name);
@@ -73,6 +81,14 @@ bool Environment::isVarInScope(const std::string &name) const {
 
   // We're at the start of the scope and didn't find the var
   return false;
+}
+
+std::map<std::string, Value>::const_iterator Environment::begin() const {
+  return d_map.cbegin();
+}
+
+std::map<std::string, Value>::const_iterator Environment::end() const {
+  return d_map.cend();
 }
 
 namespace environmentutils {

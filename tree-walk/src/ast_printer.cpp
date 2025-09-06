@@ -34,6 +34,12 @@ std::string PrinterVisitor::operator()(const Call &call) {
   return addParens(ss.str());
 }
 
+std::string PrinterVisitor::operator()(const Get &get) {
+  std::ostringstream ss;
+  ss << std::visit(*this, *get.object) << "." << get.property;
+  return addParens(ss.str());
+}
+
 std::string PrinterVisitor::operator()(const Grouping &grp) {
   std::ostringstream ss;
   ss << "group " << std::visit(*this, *grp.expr);
@@ -42,6 +48,13 @@ std::string PrinterVisitor::operator()(const Grouping &grp) {
 
 std::string PrinterVisitor::operator()(const Literal &ltrl) {
   return std::string(ltrl.value);
+}
+
+std::string PrinterVisitor::operator()(const Set &set) {
+  std::ostringstream ss;
+  ss << std::visit(*this, *set.object) << "." << set.property << "="
+     << std::visit(*this, *set.value);
+  return addParens(ss.str());
 }
 
 std::string PrinterVisitor::operator()(const Unary &unary) {

@@ -111,17 +111,20 @@ if __name__ == "__main__":
         {"name": "Assign", "members": [{"type": "std::string_view", "name": "name"}, {"type": "std::unique_ptr<Expr>", "name": "value"}]},
         {"name": "Binary", "members": [{"type": "std::unique_ptr<Expr>", "name": "left"}, {"type": "Token", "name": "op"}, {"type": "std::unique_ptr<Expr>", "name": "right"}]},
         {"name": "Call", "members": [{"type": "std::unique_ptr<Expr>", "name": "callee"}, {"type": "std::vector<std::unique_ptr<Expr>>", "name": "args"}]},
+        {"name": "Get", "members": [{"type": "std::unique_ptr<Expr>", "name": "object"}, {"type": "std::string_view", "name": "property"}]},
         {"name": "Grouping", "members": [{"type": "std::unique_ptr<Expr>", "name": "expr"}]},
         {"name": "Literal", "members": [{"type": "std::string_view", "name": "value"}, {"type": "TokenType", "name": "type"}]},
+        {"name": "Set", "members": [{"type": "std::unique_ptr<Expr>", "name": "object"}, {"type": "std::string_view", "name": "property"}, {"type": "std::unique_ptr<Expr>", "name": "value"}]},
         {"name": "Unary", "members": [{"type": "Token", "name": "op"}, {"type": "std::unique_ptr<Expr>", "name": "right"}]},
         {"name": "Variable", "members": [{"type": "std::string_view", "name": "name"}]}
     ])
 
     define_ast("tree-walk/src/stmt.h", "STMT", "Stmt", ["plox", "treewalk", "stmt"], ["ast.h", "memory", "variant"], [
         {"name": "Block", "members": [{"type": "std::vector<std::unique_ptr<stmt::Stmt>>", "name": "stmts"}]},
+        {"name": "Class", "members": [{"type": "std::string_view", "name": "name"}, {"type": "std::vector<std::unique_ptr<stmt::Stmt>>", "name": "methods"}]},
         {"name": "Expression", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]},
         {"name": "For", "members": [{"type": "std::unique_ptr<stmt::Stmt>", "name": "initialiser"}, {"type": "std::unique_ptr<ast::Expr>", "name": "condition"}, {"type": "std::unique_ptr<ast::Expr>", "name": "incrementer"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "body"}]},
-        {"name": "Fun", "members": [{"type": "std::string_view", "name": "name"}, {"type": "std::vector<std::string_view>", "name": "params"}, {"type": "std::vector<std::unique_ptr<stmt::Stmt>>", "name": "stmts"}]},
+        {"name": "Fun", "members": [{"type": "std::string_view", "name": "name"}, {"type": "std::vector<std::string_view>", "name": "params"}, {"type": "std::vector<std::unique_ptr<stmt::Stmt>>", "name": "stmts"}, {"type": "bool", "name": "isMethod"}]},
         {"name": "If", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "condition"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "ifBranch"}, {"type": "std::unique_ptr<stmt::Stmt>", "name": "elseBranch"}]},
         {"name": "Print", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]},
         {"name": "Return", "members": [{"type": "std::unique_ptr<ast::Expr>", "name": "expr"}]},

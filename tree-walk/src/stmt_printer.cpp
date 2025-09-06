@@ -20,6 +20,16 @@ std::string PrinterVisitor::operator()(const Block &blk) {
   return ss.str();
 }
 
+std::string PrinterVisitor::operator()(const Class &cls) {
+  std::ostringstream ss;
+  ss << "class " << cls.name << "{";
+  for (const auto &stmt : cls.methods) {
+    ss << std::visit(*this, *stmt) << ";";
+  }
+  ss << "}";
+  return ss.str();
+}
+
 std::string PrinterVisitor::operator()(const For &forStmt) {
   std::ostringstream ss;
   ss << "for" << "(";

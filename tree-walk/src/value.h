@@ -1,37 +1,23 @@
-#ifndef PLOX_VALUE
-#define PLOX_VALUE
+#ifndef PLOX_VALUE_H
+#define PLOX_VALUE_H
 
-#include <map>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <variant>
 
 namespace plox {
 namespace treewalk {
 
-struct Function;
-using FuncShrdPtr = std::shared_ptr<Function>;
-using Value =
-    std::variant<std::monostate, std::string, bool, double, FuncShrdPtr>;
+// Forward declarations for ptrs to prevent circular deps
+struct ClassInstance;
+using ClsInstShrdPtr = std::shared_ptr<ClassInstance>;
+struct ClassDefinition;
+using ClsDefShrdPtr = std::shared_ptr<ClassDefinition>;
+struct FunctionDescription;
+using FnDescShrdPtr = std::shared_ptr<FunctionDescription>;
 
-struct ValuePrinter {
-  std::string operator()(std::monostate);
-
-  std::string operator()(auto &&streamableType) {
-    std::ostringstream ss;
-    ss << streamableType;
-    return ss.str();
-  }
-
-  std::string operator()(const std::shared_ptr<auto> &streamableTypePtr) {
-
-    if (streamableTypePtr) {
-      return operator()(*streamableTypePtr);
-    }
-    return "nullptr";
-  }
-};
+using Value = std::variant<std::monostate, std::string, bool, double,
+                           FnDescShrdPtr, ClsDefShrdPtr, ClsInstShrdPtr>;
 
 } // namespace treewalk
 } // namespace plox

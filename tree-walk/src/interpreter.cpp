@@ -1,7 +1,9 @@
 #include <interpreter.h>
 
 #include <ast_printer.h>
+#include <class.h>
 #include <func.h>
+#include <value_printer.h>
 
 #include <charconv>
 #include <iostream>
@@ -76,6 +78,30 @@ void InterpreterVisitor::operator()(const Block &blk) {
   }
 }
 
+void InterpreterVisitor::operator()(const Class &cls) {
+  // Create a new environment for the class where the methods will be defined.
+  // Note, a class keeps the environment from the point of definition, so we
+  // capture the current environment here.
+  std::shared_ptr<Environment> clsEnv = Environment::create(d_env);
+
+  // Create the class factory which will be used to create instances.
+  d_env->define(std::string(cls.name),
+                std::make_shared<ClassDefinition>(cls.name, clsEnv));
+
+  // Set the interpreter environment to be the class environment and add the
+  // methods
+  {
+    environmentutils::ScopedSwap swapGuard(d_env, clsEnv);
+    for (auto &m : cls.methods) {
+      std::visit(*this, *m);
+    }
+  }
+
+  // Now extend the current environment so variables defined after this don't
+  // get defined in the Environment captured by the Class
+  d_env = Environment::extend(d_env);
+}
+
 void InterpreterVisitor::operator()(const For &forStmt) {
   if (forStmt.initialiser) {
     std::visit(*this, *forStmt.initialiser);
@@ -100,14 +126,22 @@ void InterpreterVisitor::operator()(const For &forStmt) {
 
 void InterpreterVisitor::operator()(Fun &funStmt) {
   // Create a function object and store it in the current env
-  auto f = std::make_shared<Function>(funStmt.name, std::move(funStmt.params),
-                                      d_env, std::move(funStmt.stmts));
+  auto f = std::make_shared<FunctionDescription>(
+      funStmt.name, d_env,
+      std::make_shared<Function>(std::move(funStmt.params),
+                                 std::move(funStmt.stmts)));
   d_env->define(std::string(funStmt.name), f);
 
-  // Extend scope so this function can have an Environment with only the
-  // currently defined vars for the scope
-  std::shared_ptr<Environment> scopeExt = Environment::extend(d_env);
-  std::swap(d_env, scopeExt);
+  if (!funStmt.isMethod) {
+    // Extend scope so this function can have an Environment with only the
+    // currently defined vars for the scope. Note, methods should know about
+    // everything within the class so we don't extend in this case.
+    std::shared_ptr<Environment> scopeExt = Environment::extend(d_env);
+    std::swap(d_env, scopeExt);
+  }
+  if (funStmt.isMethod && funStmt.name == "init") {
+    f->setIsInitialiser(true);
+  }
 }
 
 void InterpreterVisitor::operator()(const Expression &expr) {
@@ -192,34 +226,32 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
   }
 }
 
-Value InterpreterVisitor::operator()(const Call &call) {
-  // Evaluate the callee. Normally this would just be a function name, but
-  // in chains we may need to evaluate a preceeding function i.e. fn(1)(2);
-  Value callee = std::visit(*this, *call.callee);
-  if (!std::holds_alternative<FuncShrdPtr>(callee)) {
-    throw InterpretException("Tried to call non callable object " +
-                             std::visit(s_valuePrinter, callee));
+Value InterpreterVisitor::invoke(const FnDescShrdPtr &fnDescSPtr,
+                                 const Call &call) {
+  if (!fnDescSPtr) {
+    throw InterpretException(
+        "Internal error! Function closure pointer is null!");
   }
-  auto fShrdPtr = std::get<FuncShrdPtr>(callee);
-  if (!fShrdPtr) {
+  auto fnSPtr = fnDescSPtr->getFunction();
+  if (!fnSPtr) {
     throw InterpretException("Internal error! Function pointer is null!");
   }
 
   // Check if the number of args matches the callee args
-  if (call.args.size() != fShrdPtr->getArity()) {
+  if (call.args.size() != fnSPtr->getArity()) {
     std::ostringstream ss;
-    ss << "Tried to call " << fShrdPtr->getName() << " with "
+    ss << "Tried to call " << fnDescSPtr->getName() << " with "
        << call.args.size() << " args when function accepts "
-       << fShrdPtr->getArity() << " args.";
+       << fnSPtr->getArity() << " args.";
     throw InterpretException(ss.str());
   }
 
   // Create a new environment for the func to execute in
   std::shared_ptr<Environment> fEnv =
-      Environment::create(fShrdPtr->getClosure());
+      Environment::create(fnDescSPtr->getClosure());
 
   // Set args in new environment
-  const std::vector<std::string_view> &fArgNames = fShrdPtr->getArgNames();
+  const std::vector<std::string_view> &fArgNames = fnSPtr->getArgNames();
   for (int i = 0; i < call.args.size(); i++) {
     Value v = std::visit(*this, *call.args[i]);
     fEnv->define(std::string(fArgNames[i]), v);
@@ -229,13 +261,86 @@ Value InterpreterVisitor::operator()(const Call &call) {
   // destruction
   environmentutils::ScopedSwap swapGuard(d_env, fEnv);
 
+  // Special behaviour for initialisers - always return "this"
+  if (fnDescSPtr->isInitialiser()) {
+    Value _this = fnDescSPtr->getClosure()->get("this");
+    try {
+      fnSPtr->execute(d_env, *this);
+    } catch (ReturnEx &ex) {
+      if (!std::holds_alternative<std::monostate>(ex.d_val)) {
+        throw InterpretException(
+            "No explicit return allowed from a class initialiser");
+      }
+    }
+    return _this;
+  }
+
   try {
     // Pass execution to function. If the user has written a return statement it
     // will throw and be caught below
-    return fShrdPtr->execute(d_env, *this);
-  } catch (ReturnEx ex) {
+    return fnSPtr->execute(d_env, *this);
+  } catch (ReturnEx &ex) {
     return ex.d_val;
   }
+}
+
+Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsFctSPtr,
+                                 const Call &call) {
+  if (!clsFctSPtr) {
+    throw InterpretException("Internal error! Class factory pointer is null!");
+  }
+
+  // Copy the functions from the Factory into a new environment.
+  // This allows users to redefine the methods for each instance (unfortunately
+  // part of the spec) and also allows methods to be bound to the class
+  // instance scope even if they're stored in a variable outside the class.
+  auto clsInstEnv =
+      std::shared_ptr<Environment>(new Environment(*clsFctSPtr->getClosure()));
+  for (const auto &[k, v] : *clsInstEnv) {
+    auto fnClzrCpy =
+        std::make_shared<FunctionDescription>(*std::get<FnDescShrdPtr>(v));
+    fnClzrCpy->getClosure() = clsInstEnv;
+    clsInstEnv->assign(k, fnClzrCpy);
+  }
+
+  auto clsInst =
+      std::make_shared<ClassInstance>(clsFctSPtr->getName(), clsInstEnv);
+  clsInstEnv->define("this", clsInst);
+
+  if (clsInstEnv->isVarInScope("init")) {
+    invoke(std::get<FnDescShrdPtr>(clsInstEnv->get("init")), call);
+  }
+
+  return clsInst;
+}
+
+Value InterpreterVisitor::operator()(const Call &call) {
+  // Evaluate the callee. Normally this would just be a function name, but
+  // in chains we may need to evaluate a preceeding function i.e. fn(1)(2);
+  Value callee = std::visit(*this, *call.callee);
+
+  if (std::holds_alternative<FnDescShrdPtr>(callee)) {
+    return invoke(std::get<FnDescShrdPtr>(callee), call);
+  } else if (std::holds_alternative<ClsDefShrdPtr>(callee)) {
+    return invoke(std::get<ClsDefShrdPtr>(callee), call);
+  } else {
+    throw InterpretException("Tried to call non callable object " +
+                             std::visit(s_valuePrinter, callee));
+  }
+}
+
+Value InterpreterVisitor::operator()(const Get &get) {
+  // Retrieve the object we're getting from. Normally this would just be a class
+  // instance, but we may need to evaluate a function call before we can access
+  // the object i.e. getCreationFactory().create()
+  Value obj = std::visit(*this, *get.object);
+  if (!std::holds_alternative<ClsInstShrdPtr>(obj)) {
+    throw InterpretException("Tried to get a property on non class instance " +
+                             std::visit(s_valuePrinter, obj));
+  }
+
+  auto clsInst = std::get<ClsInstShrdPtr>(obj);
+  return clsInst->getClosure()->get(std::string(get.property));
 }
 
 Value InterpreterVisitor::operator()(const Grouping &grp) {
@@ -277,6 +382,26 @@ Value InterpreterVisitor::operator()(const Literal &ltrl) {
     throw InterpretException("Unable to interpret type: " +
                              tokenutils::tokenTypeToStr(ltrl.type));
   }
+}
+
+Value InterpreterVisitor::operator()(const Set &set) {
+  Value obj = std::visit(*this, *set.object);
+  if (!std::holds_alternative<ClsInstShrdPtr>(obj)) {
+    throw InterpretException("Tried to set a property on non class instance " +
+                             std::visit(s_valuePrinter, obj));
+  }
+
+  Value val = std::visit(*this, *set.value);
+  if (std::holds_alternative<FnDescShrdPtr>(val)) {
+    FnDescShrdPtr fnCopy =
+        std::make_shared<FunctionDescription>(*std::get<FnDescShrdPtr>(val));
+    fnCopy->setName(set.property);
+    fnCopy->setIsInitialiser(set.property == "init");
+    val = fnCopy;
+  }
+  std::get<ClsInstShrdPtr>(obj)->getClosure()->upsertInScope(
+      std::string(set.property), val);
+  return {};
 }
 
 Value InterpreterVisitor::operator()(const Unary &unry) {
