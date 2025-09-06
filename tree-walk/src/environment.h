@@ -33,8 +33,10 @@ public:
   // Operations
   void assign(const std::string &name, const Value &v);
   void define(const std::string &name, const Value &v = {});
-  void upsert(const std::string &name, const Value &v);
+  void upsertInScope(const std::string &name, const Value &v);
+
   Value get(const std::string &name) const;
+
   bool isVarInScope(const std::string &name) const;
 
   // Iterators

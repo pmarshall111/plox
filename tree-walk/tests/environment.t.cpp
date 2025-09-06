@@ -40,8 +40,8 @@ TEST(Environment, UpsertAndGet) {
   Value updated = "hi";
 
   // WHEN
-  envPtr->upsert("x", initial);
-  envPtr->upsert("x", updated);
+  envPtr->upsertInScope("x", initial);
+  envPtr->upsertInScope("x", updated);
 
   // THEN
   EXPECT_EQ(envPtr->get("x"), updated);

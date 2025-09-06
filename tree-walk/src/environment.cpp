@@ -50,7 +50,7 @@ void Environment::define(const std::string &name, const Value &v) {
   d_map[name] = v;
 }
 
-void Environment::upsert(const std::string &name, const Value &v) {
+void Environment::upsertInScope(const std::string &name, const Value &v) {
   if (isVarInScope(name)) {
     return assign(name, v);
   }

@@ -395,8 +395,8 @@ Value InterpreterVisitor::operator()(const Set &set) {
     fnCopy->setIsInitialiser(set.property == "init");
     val = fnCopy;
   }
-  std::get<ClsInstShrdPtr>(obj)->getClosure()->upsert(std::string(set.property),
-                                                      val);
+  std::get<ClsInstShrdPtr>(obj)->getClosure()->upsertInScope(
+      std::string(set.property), val);
   return {};
 }
 
