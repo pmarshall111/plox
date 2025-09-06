@@ -80,8 +80,8 @@ void InterpreterVisitor::operator()(const Block &blk) {
 
 void InterpreterVisitor::operator()(const Class &cls) {
   // Create a new environment for the class where the methods will be defined.
-  // Note, a class maintains scope at the point of definition, so we capture
-  // the current environment here.
+  // Note, a class keeps the environment from the point of definition, so we
+  // capture the current environment here.
   std::shared_ptr<Environment> clsEnv = Environment::create(d_env);
 
   // Create the class factory which will be used to create instances.
