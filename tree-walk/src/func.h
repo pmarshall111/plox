@@ -22,7 +22,8 @@ public:
 
   int getArity() const;
   const std::vector<std::string_view> &getArgNames() const;
-  Value execute(std::shared_ptr<Environment> env, InterpreterVisitor &interp);
+  Value execute(std::shared_ptr<Environment> env,
+                InterpreterVisitor &interp) const;
 
 private:
   std::vector<std::string_view> d_argNames;
@@ -32,25 +33,24 @@ private:
 class FunctionMetadata {
 public:
   FunctionMetadata(std::string_view name, std::shared_ptr<Environment> closure,
-                   std::shared_ptr<Function> fn);
+                   std::shared_ptr<const Function> fn);
 
   std::string_view getName() const;
   void setName(std::string_view name);
   std::shared_ptr<Environment> &getClosure();
-  std::shared_ptr<Function> &getFunction(); // TODO: make const
+  const std::shared_ptr<const Function> &getFunction() const;
   bool isInitialiser() const;
   void setIsInitialiser(bool b);
 
 private:
   std::string_view d_name;
   std::shared_ptr<Environment> d_closure;
-  std::shared_ptr<Function> d_fn;
+  std::shared_ptr<const Function> d_fn;
   bool d_isInitialiser;
 };
 
 std::ostream &operator<<(std::ostream &os, const Function &fn);
-std::ostream &operator<<(std::ostream &os,
-                         FunctionMetadata &fn); // TODO: make const
+std::ostream &operator<<(std::ostream &os, const FunctionMetadata &fn);
 
 } // namespace treewalk
 } // namespace plox

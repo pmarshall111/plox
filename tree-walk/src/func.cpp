@@ -19,7 +19,7 @@ const std::vector<std::string_view> &Function::getArgNames() const {
 }
 
 Value Function::execute(std::shared_ptr<Environment> env,
-                        InterpreterVisitor &interp) {
+                        InterpreterVisitor &interp) const {
   if (std::holds_alternative<nativefunc::Fn>(d_body)) {
     return std::get<nativefunc::Fn>(d_body)(env, interp);
   }
@@ -33,7 +33,7 @@ Value Function::execute(std::shared_ptr<Environment> env,
 
 FunctionMetadata::FunctionMetadata(std::string_view name,
                                    std::shared_ptr<Environment> closure,
-                                   std::shared_ptr<Function> fn)
+                                   std::shared_ptr<const Function> fn)
     : d_name(name), d_closure(closure), d_fn(fn) {}
 
 std::string_view FunctionMetadata::getName() const { return d_name; }
@@ -44,7 +44,9 @@ std::shared_ptr<Environment> &FunctionMetadata::getClosure() {
   return d_closure;
 }
 
-std::shared_ptr<Function> &FunctionMetadata::getFunction() { return d_fn; }
+const std::shared_ptr<const Function> &FunctionMetadata::getFunction() const {
+  return d_fn;
+}
 
 bool FunctionMetadata::isInitialiser() const { return d_isInitialiser; }
 
@@ -65,7 +67,7 @@ std::ostream &operator<<(std::ostream &os, const Function &fn) {
   return os;
 }
 
-std::ostream &operator<<(std::ostream &os, FunctionMetadata &fnCl) {
+std::ostream &operator<<(std::ostream &os, const FunctionMetadata &fnCl) {
   os << "fun " << fnCl.getName() << *fnCl.getFunction();
   return os;
 }
