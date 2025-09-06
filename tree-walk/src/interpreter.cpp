@@ -86,7 +86,7 @@ void InterpreterVisitor::operator()(const Class &cls) {
 
   // Create the class factory which will be used to create instances.
   d_env->define(std::string(cls.name),
-                std::make_shared<ClassFactory>(cls.name, clsEnv));
+                std::make_shared<ClassDefinition>(cls.name, clsEnv));
 
   // Set the interpreter environment to be the class environment and add the
   // methods
@@ -277,7 +277,7 @@ Value InterpreterVisitor::invoke(const FnClosureShrdPtr &fnClzrSPtr,
   }
 }
 
-Value InterpreterVisitor::invoke(const ClsFactShrdPtr &clsFctSPtr,
+Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsFctSPtr,
                                  const Call &call) {
   if (!clsFctSPtr) {
     throw InterpretException("Internal error! Class factory pointer is null!");
@@ -318,8 +318,8 @@ Value InterpreterVisitor::operator()(const Call &call) {
 
   if (std::holds_alternative<FnClosureShrdPtr>(callee)) {
     return invoke(std::get<FnClosureShrdPtr>(callee), call);
-  } else if (std::holds_alternative<ClsFactShrdPtr>(callee)) {
-    return invoke(std::get<ClsFactShrdPtr>(callee), call);
+  } else if (std::holds_alternative<ClsDefShrdPtr>(callee)) {
+    return invoke(std::get<ClsDefShrdPtr>(callee), call);
   } else {
     throw InterpretException("Tried to call non callable object " +
                              std::visit(s_valuePrinter, callee));

@@ -15,11 +15,11 @@ namespace plox {
 namespace treewalk {
 
 using ClsInstShrdPtr = std::shared_ptr<ClassInstance>;
-using ClsFactShrdPtr = std::shared_ptr<ClassFactory>;
+using ClsDefShrdPtr = std::shared_ptr<ClassDefinition>;
 using FnClosureShrdPtr = std::shared_ptr<FunctionClosure>;
 
 using Value = std::variant<std::monostate, std::string, bool, double,
-                           FnClosureShrdPtr, ClsFactShrdPtr, ClsInstShrdPtr>;
+                           FnClosureShrdPtr, ClsDefShrdPtr, ClsInstShrdPtr>;
 
 // Concepts to control which template method should be chosen
 template <typename T>

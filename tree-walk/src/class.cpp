@@ -3,15 +3,17 @@
 namespace plox {
 namespace treewalk {
 
-ClassFactory::ClassFactory(std::string_view name,
-                           std::shared_ptr<Environment> closure)
+ClassDefinition::ClassDefinition(std::string_view name,
+                                 std::shared_ptr<Environment> closure)
     : d_name(name), d_closure(closure){};
 
-std::string_view ClassFactory::getName() const { return d_name; }
+std::string_view ClassDefinition::getName() const { return d_name; }
 
-std::shared_ptr<Environment> &ClassFactory::getClosure() { return d_closure; };
+std::shared_ptr<Environment> &ClassDefinition::getClosure() {
+  return d_closure;
+};
 
-std::ostream &operator<<(std::ostream &os, const ClassFactory &cls) {
+std::ostream &operator<<(std::ostream &os, const ClassDefinition &cls) {
   os << "class " << cls.getName();
   return os;
 }

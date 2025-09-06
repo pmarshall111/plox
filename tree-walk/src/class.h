@@ -9,9 +9,9 @@
 namespace plox {
 namespace treewalk {
 
-class ClassFactory {
+class ClassDefinition {
 public:
-  ClassFactory(std::string_view name, std::shared_ptr<Environment> closure);
+  ClassDefinition(std::string_view name, std::shared_ptr<Environment> closure);
 
   std::string_view getName() const;
   std::shared_ptr<Environment> &getClosure();
@@ -33,7 +33,7 @@ private:
   std::shared_ptr<Environment> d_closure;
 };
 
-std::ostream &operator<<(std::ostream &os, const ClassFactory &cls);
+std::ostream &operator<<(std::ostream &os, const ClassDefinition &cls);
 std::ostream &operator<<(std::ostream &os, const ClassInstance &cls);
 
 } // namespace treewalk
