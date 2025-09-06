@@ -1,6 +1,6 @@
 # Plox
 
-Following the "Crafting Interpreters" book and writing an implementation of the Lox language.
+Following the "Crafting Interpreters" book to write an implementation of the Lox language.
 
 ## Dependencies
 
