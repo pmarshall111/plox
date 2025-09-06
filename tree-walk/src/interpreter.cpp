@@ -324,7 +324,9 @@ Value InterpreterVisitor::operator()(const Call &call) {
 }
 
 Value InterpreterVisitor::operator()(const Get &get) {
-  // Retrieve the object we're getting from
+  // Retrieve the object we're getting from. Normally this would just be a class
+  // instance, but we may need to evaluate a function call before we can access
+  // the object i.e. getCreationFactory().create()
   Value obj = std::visit(*this, *get.object);
   if (!std::holds_alternative<ClsInstShrdPtr>(obj)) {
     throw InterpretException("Tried to get a property on non class instance " +
