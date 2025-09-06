@@ -126,7 +126,7 @@ void InterpreterVisitor::operator()(const For &forStmt) {
 
 void InterpreterVisitor::operator()(Fun &funStmt) {
   // Create a function object and store it in the current env
-  auto f = std::make_shared<FunctionMetadata>(
+  auto f = std::make_shared<FunctionDescription>(
       funStmt.name, d_env,
       std::make_shared<Function>(std::move(funStmt.params),
                                  std::move(funStmt.stmts)));
@@ -226,13 +226,13 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
   }
 }
 
-Value InterpreterVisitor::invoke(const FnMetdataShrdPtr &fnMdtaSPtr,
+Value InterpreterVisitor::invoke(const FnDescShrdPtr &fnDescSPtr,
                                  const Call &call) {
-  if (!fnMdtaSPtr) {
+  if (!fnDescSPtr) {
     throw InterpretException(
         "Internal error! Function closure pointer is null!");
   }
-  auto fnSPtr = fnMdtaSPtr->getFunction();
+  auto fnSPtr = fnDescSPtr->getFunction();
   if (!fnSPtr) {
     throw InterpretException("Internal error! Function pointer is null!");
   }
@@ -240,7 +240,7 @@ Value InterpreterVisitor::invoke(const FnMetdataShrdPtr &fnMdtaSPtr,
   // Check if the number of args matches the callee args
   if (call.args.size() != fnSPtr->getArity()) {
     std::ostringstream ss;
-    ss << "Tried to call " << fnMdtaSPtr->getName() << " with "
+    ss << "Tried to call " << fnDescSPtr->getName() << " with "
        << call.args.size() << " args when function accepts "
        << fnSPtr->getArity() << " args.";
     throw InterpretException(ss.str());
@@ -248,7 +248,7 @@ Value InterpreterVisitor::invoke(const FnMetdataShrdPtr &fnMdtaSPtr,
 
   // Create a new environment for the func to execute in
   std::shared_ptr<Environment> fEnv =
-      Environment::create(fnMdtaSPtr->getClosure());
+      Environment::create(fnDescSPtr->getClosure());
 
   // Set args in new environment
   const std::vector<std::string_view> &fArgNames = fnSPtr->getArgNames();
@@ -262,8 +262,8 @@ Value InterpreterVisitor::invoke(const FnMetdataShrdPtr &fnMdtaSPtr,
   environmentutils::ScopedSwap swapGuard(d_env, fEnv);
 
   // Special behaviour for initialisers - always return "this"
-  if (fnMdtaSPtr->isInitialiser()) {
-    Value _this = fnMdtaSPtr->getClosure()->get("this");
+  if (fnDescSPtr->isInitialiser()) {
+    Value _this = fnDescSPtr->getClosure()->get("this");
     try {
       fnSPtr->execute(d_env, *this);
     } catch (ReturnEx &ex) {
@@ -298,7 +298,7 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsFctSPtr,
       std::shared_ptr<Environment>(new Environment(*clsFctSPtr->getClosure()));
   for (const auto &[k, v] : *clsInstEnv) {
     auto fnClzrCpy =
-        std::make_shared<FunctionMetadata>(*std::get<FnMetdataShrdPtr>(v));
+        std::make_shared<FunctionDescription>(*std::get<FnDescShrdPtr>(v));
     fnClzrCpy->getClosure() = clsInstEnv;
     clsInstEnv->assign(k, fnClzrCpy);
   }
@@ -308,7 +308,7 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsFctSPtr,
   clsInstEnv->define("this", clsInst);
 
   if (clsInstEnv->isVarInScope("init")) {
-    invoke(std::get<FnMetdataShrdPtr>(clsInstEnv->get("init")), call);
+    invoke(std::get<FnDescShrdPtr>(clsInstEnv->get("init")), call);
   }
 
   return clsInst;
@@ -319,8 +319,8 @@ Value InterpreterVisitor::operator()(const Call &call) {
   // in chains we may need to evaluate a preceeding function i.e. fn(1)(2);
   Value callee = std::visit(*this, *call.callee);
 
-  if (std::holds_alternative<FnMetdataShrdPtr>(callee)) {
-    return invoke(std::get<FnMetdataShrdPtr>(callee), call);
+  if (std::holds_alternative<FnDescShrdPtr>(callee)) {
+    return invoke(std::get<FnDescShrdPtr>(callee), call);
   } else if (std::holds_alternative<ClsDefShrdPtr>(callee)) {
     return invoke(std::get<ClsDefShrdPtr>(callee), call);
   } else {
@@ -392,9 +392,9 @@ Value InterpreterVisitor::operator()(const Set &set) {
   }
 
   Value val = std::visit(*this, *set.value);
-  if (std::holds_alternative<FnMetdataShrdPtr>(val)) {
-    FnMetdataShrdPtr fnCopy =
-        std::make_shared<FunctionMetadata>(*std::get<FnMetdataShrdPtr>(val));
+  if (std::holds_alternative<FnDescShrdPtr>(val)) {
+    FnDescShrdPtr fnCopy =
+        std::make_shared<FunctionDescription>(*std::get<FnDescShrdPtr>(val));
     fnCopy->setName(set.property);
     fnCopy->setIsInitialiser(set.property == "init");
     val = fnCopy;

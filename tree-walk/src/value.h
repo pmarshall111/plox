@@ -13,11 +13,11 @@ struct ClassInstance;
 using ClsInstShrdPtr = std::shared_ptr<ClassInstance>;
 struct ClassDefinition;
 using ClsDefShrdPtr = std::shared_ptr<ClassDefinition>;
-struct FunctionMetadata;
-using FnMetdataShrdPtr = std::shared_ptr<FunctionMetadata>;
+struct FunctionDescription;
+using FnDescShrdPtr = std::shared_ptr<FunctionDescription>;
 
 using Value = std::variant<std::monostate, std::string, bool, double,
-                           FnMetdataShrdPtr, ClsDefShrdPtr, ClsInstShrdPtr>;
+                           FnDescShrdPtr, ClsDefShrdPtr, ClsInstShrdPtr>;
 
 } // namespace treewalk
 } // namespace plox

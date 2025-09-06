@@ -20,7 +20,7 @@ void addClock(std::shared_ptr<Environment> env) {
     return std::chrono::duration<double, std::milli>(duration).count();
   };
 
-  auto clockFn = std::make_shared<FunctionMetadata>(
+  auto clockFn = std::make_shared<FunctionDescription>(
       s_name, env,
       std::make_shared<Function>(std::vector<std::string_view>{}, clock));
   env->define(s_name, clockFn);
@@ -32,7 +32,7 @@ void addVersion(std::shared_ptr<Environment> env) {
   auto version = [](std::shared_ptr<Environment> env,
                     InterpreterVisitor &interpV) { return "tree-walk"; };
 
-  auto versionFn = std::make_shared<FunctionMetadata>(
+  auto versionFn = std::make_shared<FunctionDescription>(
       s_name, env,
       std::make_shared<Function>(std::vector<std::string_view>{}, version));
   env->define(s_name, versionFn);
