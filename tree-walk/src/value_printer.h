@@ -16,10 +16,10 @@ namespace treewalk {
 
 using ClsInstShrdPtr = std::shared_ptr<ClassInstance>;
 using ClsDefShrdPtr = std::shared_ptr<ClassDefinition>;
-using FnClosureShrdPtr = std::shared_ptr<FunctionClosure>;
+using FnMetdataShrdPtr = std::shared_ptr<FunctionMetadata>;
 
 using Value = std::variant<std::monostate, std::string, bool, double,
-                           FnClosureShrdPtr, ClsDefShrdPtr, ClsInstShrdPtr>;
+                           FnMetdataShrdPtr, ClsDefShrdPtr, ClsInstShrdPtr>;
 
 // Concepts to control which template method should be chosen
 template <typename T>

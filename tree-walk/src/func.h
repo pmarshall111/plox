@@ -29,10 +29,10 @@ private:
   std::variant<std::vector<std::unique_ptr<stmt::Stmt>>, nativefunc::Fn> d_body;
 };
 
-class FunctionClosure {
+class FunctionMetadata {
 public:
-  FunctionClosure(std::string_view name, std::shared_ptr<Environment> closure,
-                  std::shared_ptr<Function> fn);
+  FunctionMetadata(std::string_view name, std::shared_ptr<Environment> closure,
+                   std::shared_ptr<Function> fn);
 
   std::string_view getName() const;
   void setName(std::string_view name);
@@ -50,7 +50,7 @@ private:
 
 std::ostream &operator<<(std::ostream &os, const Function &fn);
 std::ostream &operator<<(std::ostream &os,
-                         FunctionClosure &fn); // TODO: make const
+                         FunctionMetadata &fn); // TODO: make const
 
 } // namespace treewalk
 } // namespace plox

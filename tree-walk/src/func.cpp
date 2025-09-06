@@ -31,24 +31,24 @@ Value Function::execute(std::shared_ptr<Environment> env,
   return {}; // return null if the user doesn't explicitly add a return stmt.
 }
 
-FunctionClosure::FunctionClosure(std::string_view name,
-                                 std::shared_ptr<Environment> closure,
-                                 std::shared_ptr<Function> fn)
+FunctionMetadata::FunctionMetadata(std::string_view name,
+                                   std::shared_ptr<Environment> closure,
+                                   std::shared_ptr<Function> fn)
     : d_name(name), d_closure(closure), d_fn(fn) {}
 
-std::string_view FunctionClosure::getName() const { return d_name; }
+std::string_view FunctionMetadata::getName() const { return d_name; }
 
-void FunctionClosure::setName(std::string_view name) { d_name = name; }
+void FunctionMetadata::setName(std::string_view name) { d_name = name; }
 
-std::shared_ptr<Environment> &FunctionClosure::getClosure() {
+std::shared_ptr<Environment> &FunctionMetadata::getClosure() {
   return d_closure;
 }
 
-std::shared_ptr<Function> &FunctionClosure::getFunction() { return d_fn; }
+std::shared_ptr<Function> &FunctionMetadata::getFunction() { return d_fn; }
 
-bool FunctionClosure::isInitialiser() const { return d_isInitialiser; }
+bool FunctionMetadata::isInitialiser() const { return d_isInitialiser; }
 
-void FunctionClosure::setIsInitialiser(bool b) { d_isInitialiser = b; }
+void FunctionMetadata::setIsInitialiser(bool b) { d_isInitialiser = b; }
 
 std::ostream &operator<<(std::ostream &os, const Function &fn) {
   os << "(";
@@ -65,7 +65,7 @@ std::ostream &operator<<(std::ostream &os, const Function &fn) {
   return os;
 }
 
-std::ostream &operator<<(std::ostream &os, FunctionClosure &fnCl) {
+std::ostream &operator<<(std::ostream &os, FunctionMetadata &fnCl) {
   os << "fun " << fnCl.getName() << *fnCl.getFunction();
   return os;
 }
