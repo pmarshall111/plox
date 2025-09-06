@@ -154,6 +154,31 @@ def test_class_init(lox_runner):
     assert stderr == ""
 
 
+def test_class_init_sets_field(lox_runner):
+    # GIVEN
+    code = """
+    class Foo {
+        init() {
+            fun printMsg() {
+                print this.msg;
+            }
+            this.msg = "hi";
+            this.printMsg = printMsg;
+        }
+    }
+
+    var foo = Foo();
+    foo.printMsg();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["hi"]
+    assert stderr == ""
+
+
 def test_class_init_explicit_return(lox_runner):
     # GIVEN
     code = """
