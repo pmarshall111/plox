@@ -15,7 +15,7 @@
 //                | whileStmt ;
 //
 // blockStmt      → "{" statement* "}" ;
-// classStmt      →  "class" IDENTIFIER "{" function* "}" ;
+// classStmt      →  "class" IDENTIFIER ("<" IDENTIFIER)? "{" function* "}" ;
 // exprStmt       → expression ";" ;
 // funcStmt       → "fun" function ;
 // forStmt        → "for" "(" (varStmt | exprStmt | ";") expression? ";" expression? ")" statement ";" ;
@@ -34,7 +34,7 @@
 // unary          → ( "!" | "-" ) unary
 //                | call ;
 // call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
-// primary        → NUMBER | STRING | "true" | "false" | "nil" | "this"
+// primary        → NUMBER | STRING | "true" | "false" | "nil" | "this" | "super"
 //                | "(" expression ")" | IDENTIFIER ;
 
 // function       → INDENTIFIER "(" parameters? ")" blockStmt ;
@@ -96,7 +96,8 @@ std::unique_ptr<ast::Expr> primary(TokenStream &tokStream) {
     return std::make_unique<ast::Expr>(ast::Literal{tok.value, tok.type});
   }
   case TokenType::IDENTIFIER:
-  case TokenType::THIS: {
+  case TokenType::THIS:
+  case TokenType::SUPER: {
     tokStream.next();
     return std::make_unique<ast::Expr>(ast::Variable{tok.value});
   }
@@ -288,6 +289,16 @@ std::unique_ptr<stmt::Stmt> classStatement(TokenStream &tokStream) {
   }
   auto cls = std::make_unique<stmt::Stmt>(stmt::Class{tokStream.peek().value});
   tokStream.next();
+
+  if (TokenType::LESS == tokStream.peek().type) {
+    tokStream.next();
+    if (TokenType::IDENTIFIER != tokStream.peek().type) {
+      throw ParseException("class extension not followed by identifier!",
+                           tokStream.peek().line);
+    }
+    std::get<stmt::Class>(*cls).super = tokStream.peek().value;
+    tokStream.next();
+  }
 
   if (TokenType::LEFT_BRACE != tokStream.peek().type) {
     throw ParseException(

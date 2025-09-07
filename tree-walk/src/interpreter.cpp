@@ -79,6 +79,17 @@ void InterpreterVisitor::operator()(const Block &blk) {
 }
 
 void InterpreterVisitor::operator()(const Class &cls) {
+  // Retrieve the super class
+  std::shared_ptr<ClassDefinition> super;
+  if (cls.super) {
+    Value v = d_env->get(std::string(cls.super.value()));
+    if (!std::holds_alternative<ClsDefShrdPtr>(v)) {
+      throw InterpretException("Super class for " + std::string(cls.name) +
+                               "must be a class");
+    }
+    super = std::get<ClsDefShrdPtr>(v);
+  }
+
   // Create a new environment for the class where the methods will be defined.
   // Note, a class keeps the environment from the point of definition, so we
   // capture the current environment here.
@@ -86,7 +97,7 @@ void InterpreterVisitor::operator()(const Class &cls) {
 
   // Create the class factory which will be used to create instances.
   d_env->define(std::string(cls.name),
-                std::make_shared<ClassDefinition>(cls.name, clsEnv));
+                std::make_shared<ClassDefinition>(cls.name, clsEnv, super));
 
   // Set the interpreter environment to be the class environment and add the
   // methods
@@ -290,28 +301,49 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
     throw InterpretException("Internal error! Class factory pointer is null!");
   }
 
-  // Copy the functions from the Factory into a new environment.
-  // This allows users to redefine the methods for each instance (unfortunately
-  // part of the spec) and also allows methods to be bound to the class
-  // instance scope even if they're stored in a variable outside the class.
-  auto clsInstEnv =
-      std::shared_ptr<Environment>(new Environment(*clsDefSPtr->getClosure()));
-  for (const auto &[k, v] : *clsInstEnv) {
-    auto fnClzrCpy =
-        std::make_shared<FunctionDescription>(*std::get<FnDescShrdPtr>(v));
-    fnClzrCpy->getClosure() = clsInstEnv;
-    clsInstEnv->assign(k, fnClzrCpy);
+  // Create class instance for every class in the heirarchy. This allows for
+  // each level of the heirarchy to have its own environment containing its
+  // own methods. That allows for multiple definitions of the same functions
+  // across the levels of the heirarchy.
+  auto currDef = clsDefSPtr;
+  std::shared_ptr<ClassInstance> currClass;
+  std::shared_ptr<ClassInstance> childOfCurrent;
+  std::shared_ptr<ClassInstance> leafClass;
+  do {
+    // Copy the functions from the Definition into a new environment.
+    // This allows users to redefine the methods for each instance and also
+    // allows methods to be bound to the class instance scope even if they're
+    // stored in a variable outside the class.
+    auto currEnv =
+        std::shared_ptr<Environment>(new Environment(*currDef->getClosure()));
+    for (const auto &[k, v] : *currEnv) {
+      auto fnDefCopy =
+          std::make_shared<FunctionDescription>(*std::get<FnDescShrdPtr>(v));
+      fnDefCopy->getClosure() = currEnv;
+      currEnv->assign(k, fnDefCopy);
+    }
+
+    // Create ClassInstance object for the current item in the inheritance tree
+    // and link the heirarchy together through 'this' and 'super'
+    currClass = std::make_shared<ClassInstance>(currDef->getName(), currEnv);
+    if (!leafClass) {
+      leafClass = currClass;
+    }
+    currEnv->define("this", leafClass);
+    if (childOfCurrent) {
+      childOfCurrent->getClosure()->define("super", currClass);
+    }
+
+    // Prepare next iteration
+    childOfCurrent = currClass;
+    currDef = currDef->getSuper();
+  } while (currDef);
+
+  if (leafClass->getClosure()->isVarInScope("init")) {
+    invoke(std::get<FnDescShrdPtr>(leafClass->getClosure()->get("init")), call);
   }
 
-  auto clsInst =
-      std::make_shared<ClassInstance>(clsDefSPtr->getName(), clsInstEnv);
-  clsInstEnv->define("this", clsInst);
-
-  if (clsInstEnv->isVarInScope("init")) {
-    invoke(std::get<FnDescShrdPtr>(clsInstEnv->get("init")), call);
-  }
-
-  return clsInst;
+  return leafClass;
 }
 
 Value InterpreterVisitor::operator()(const Call &call) {

@@ -7,6 +7,8 @@
 
 #include <memory>
 
+#include <optional>
+
 #include <variant>
 
 namespace plox {
@@ -42,6 +44,7 @@ struct Block {
 
 struct Class {
   std::string_view name;
+  std::optional<std::string_view> super;
   std::vector<std::unique_ptr<stmt::Stmt>> methods;
 };
 

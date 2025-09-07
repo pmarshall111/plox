@@ -11,14 +11,17 @@ namespace treewalk {
 
 class ClassDefinition {
 public:
-  ClassDefinition(std::string_view name, std::shared_ptr<Environment> closure);
+  ClassDefinition(std::string_view name, std::shared_ptr<Environment> closure,
+                  std::shared_ptr<ClassDefinition> d_super);
 
   std::string_view getName() const;
   std::shared_ptr<Environment> &getClosure();
+  std::shared_ptr<ClassDefinition> getSuper();
 
 private:
   std::string_view d_name;
   std::shared_ptr<Environment> d_closure;
+  std::shared_ptr<ClassDefinition> d_super;
 };
 
 class ClassInstance {

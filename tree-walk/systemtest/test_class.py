@@ -237,3 +237,141 @@ def test_class_init_explicit_return_no_val_is_ok(lox_runner):
     # THEN
     assert stdout.strip().splitlines() == []
     assert stderr == ""
+
+
+def test_class_calling_super_methods(lox_runner):
+    # GIVEN
+    code = """
+    class Foo {
+        sayName() {
+            print "foo!";
+        }
+    }
+
+    class Bar < Foo {
+        sayName() {
+            super.sayName();
+            print "bar!";
+        }
+    }
+
+    class Baz < Bar {
+        sayName() {
+            super.sayName();
+            print "baz!";
+        }
+    }
+
+
+    var baz = Baz();
+    baz.sayName();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["foo!", "bar!", "baz!"]
+    assert stderr == ""
+
+
+def test_class_super_can_set_fields_on_class(lox_runner):
+    # GIVEN
+    code = """
+    class Foo {
+        setField() {
+            this.field = "Foo";
+        }
+    }
+
+    class Bar < Foo {
+        showFields() {
+            this.field = "Bar";
+            super.setField();
+            print this.field;
+        }
+    }
+
+
+    var bar = Bar();
+    bar.showFields();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["Foo"]
+    assert stderr == ""
+
+
+def test_calling_super_init(lox_runner):
+    # GIVEN
+    code = """
+    class Foo {
+        init() {
+            print "initing Foo!";
+        }
+    }
+
+    class Bar < Foo {
+        init() {
+            super.init();
+            print "initing Bar!";
+        }
+    }
+
+
+    var bar = Bar();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["initing Foo!", "initing Bar!"]
+    assert stderr == ""
+
+
+def test_recursive_inheritance(lox_runner):
+    # GIVEN
+    code = """
+    class Foo < Foo {
+    }
+
+    var foo = Foo();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == []
+    assert "error" in stderr
+
+
+def test_super_init_is_not_implicitly_called(lox_runner):
+    # GIVEN
+    code = """
+    class Foo {
+        init() {
+            print "initing Foo!";
+        }
+    }
+
+    class Bar < Foo {
+        init() {
+            print "initing Bar!";
+        }
+    }
+
+
+    var bar = Bar();
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["initing Bar!"]
+    assert stderr == ""
