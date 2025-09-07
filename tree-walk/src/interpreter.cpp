@@ -284,9 +284,9 @@ Value InterpreterVisitor::invoke(const FnDescShrdPtr &fnDescSPtr,
   }
 }
 
-Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsFctSPtr,
+Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
                                  const Call &call) {
-  if (!clsFctSPtr) {
+  if (!clsDefSPtr) {
     throw InterpretException("Internal error! Class factory pointer is null!");
   }
 
@@ -295,7 +295,7 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsFctSPtr,
   // part of the spec) and also allows methods to be bound to the class
   // instance scope even if they're stored in a variable outside the class.
   auto clsInstEnv =
-      std::shared_ptr<Environment>(new Environment(*clsFctSPtr->getClosure()));
+      std::shared_ptr<Environment>(new Environment(*clsDefSPtr->getClosure()));
   for (const auto &[k, v] : *clsInstEnv) {
     auto fnClzrCpy =
         std::make_shared<FunctionDescription>(*std::get<FnDescShrdPtr>(v));
@@ -304,7 +304,7 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsFctSPtr,
   }
 
   auto clsInst =
-      std::make_shared<ClassInstance>(clsFctSPtr->getName(), clsInstEnv);
+      std::make_shared<ClassInstance>(clsDefSPtr->getName(), clsInstEnv);
   clsInstEnv->define("this", clsInst);
 
   if (clsInstEnv->isVarInScope("init")) {
