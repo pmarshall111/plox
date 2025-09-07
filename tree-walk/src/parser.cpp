@@ -34,7 +34,7 @@
 // unary          → ( "!" | "-" ) unary
 //                | call ;
 // call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
-// primary        → NUMBER | STRING | "true" | "false" | "nil"
+// primary        → NUMBER | STRING | "true" | "false" | "nil" | "this"
 //                | "(" expression ")" | IDENTIFIER ;
 
 // function       → INDENTIFIER "(" parameters? ")" blockStmt ;
