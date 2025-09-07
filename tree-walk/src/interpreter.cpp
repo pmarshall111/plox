@@ -302,9 +302,9 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
   }
 
   // Create class instance for every class in the heirarchy. This allows for
-  // each level of the heirarchy to have its own environment containing its
-  // own methods. That allows for multiple definitions of the same functions
-  // across the levels of the heirarchy.
+  // each level of the heirarchy to have its own environment containing the
+  // methods for the level. That allows for multiple definitions of the same
+  // function name across the heirarchy.
   auto currDef = clsDefSPtr;
   std::shared_ptr<ClassInstance> currClass;
   std::shared_ptr<ClassInstance> childOfCurrent;
@@ -313,7 +313,8 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
     // Copy the functions from the Definition into a new environment.
     // This allows users to redefine the methods for each instance and also
     // allows methods to be bound to the class instance scope even if they're
-    // stored in a variable outside the class.
+    // stored in a variable outside the class. (Requirements that are part of
+    // the spec)
     auto currEnv =
         std::shared_ptr<Environment>(new Environment(*currDef->getClosure()));
     for (const auto &[k, v] : *currEnv) {
@@ -323,7 +324,7 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
       currEnv->assign(k, fnDefCopy);
     }
 
-    // Create ClassInstance object for the current item in the inheritance tree
+    // Create ClassInstance object for the current class in the inheritance tree
     // and link the heirarchy together through 'this' and 'super'
     currClass = std::make_shared<ClassInstance>(currDef->getName(), currEnv);
     if (!leafClass) {
