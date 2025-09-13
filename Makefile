@@ -19,11 +19,11 @@ run: build
 ### Testing
 
 .PHONY: unit-test
-unit-test: build
-	./build/tree-walk/tests/tree-walk-tst
+unit-test: build-asan
+	./build-asan/tree-walk/tests/tree-walk-tst
 
 .PHONY: system-test
-system-test: build
+system-test: build-asan
 	pytest
 
 .PHONY: test
