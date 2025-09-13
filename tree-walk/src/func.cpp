@@ -34,7 +34,7 @@ Value Function::execute(std::shared_ptr<Environment> env,
 FunctionDescription::FunctionDescription(std::string_view name,
                                          std::shared_ptr<Environment> closure,
                                          std::shared_ptr<const Function> fn)
-    : d_name(name), d_closure(closure), d_fn(fn) {}
+    : d_name(name), d_closure(closure), d_fn(fn), d_isInitialiser(false) {}
 
 std::string_view FunctionDescription::getName() const { return d_name; }
 
