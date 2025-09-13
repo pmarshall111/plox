@@ -171,7 +171,6 @@ std::vector<Token> scanTokens(const std::string_view code,
         while (code.at(pos) != '\n') {
           pos++;
         }
-        pos++;
         line++;
       } else {
         tokens.emplace_back(TokenType::SLASH, std::string_view(&c, 1), line);

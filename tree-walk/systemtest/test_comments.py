@@ -1,10 +1,10 @@
 def test_comments(lox_runner):
     # GIVEN
     code = """
-    var a = 15; // This is a variable a
-    var b = 2;
-    // The above variable is var b
-    print a + b;
+var a = 15; // This is a variable a
+var b = 2;
+// The above variable is var b
+print a + b;
     """
 
     # WHEN
