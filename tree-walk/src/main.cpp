@@ -22,6 +22,10 @@ void initNativeFuncs(std::shared_ptr<Environment> env) {
   nativefunc::addVersion(env);
 }
 
+void initKeywords(std::shared_ptr<Environment> env) {
+  env->define("nil", std::monostate{});
+}
+
 int run(const std::string &buff) {
   // Scan
   std::vector<SyntaxException> syntErrs;
@@ -125,6 +129,7 @@ int main(int argc, char **argv) {
   // Route to desired behaviour
   using namespace plox::treewalk;
   initNativeFuncs(s_globals);
+  initKeywords(s_globals);
   int rc = 0;
   if (script) {
     rc = runFile(script.value());
