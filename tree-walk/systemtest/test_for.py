@@ -3,7 +3,6 @@ def test_for(lox_runner):
     code = """
     for (var i = 0; i<5; i=i+1)
         print(i);
-    ;
     """
 
     # WHEN

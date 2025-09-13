@@ -18,12 +18,12 @@
 // classStmt      →  "class" IDENTIFIER ("<" IDENTIFIER)? "{" function* "}" ;
 // exprStmt       → expression ";" ;
 // funcStmt       → "fun" function ;
-// forStmt        → "for" "(" (varStmt | exprStmt | ";") expression? ";" expression? ")" statement ";" ;
-// ifStmt         → "if" "(" expression ")" statement ("else" statement)? ";" ;
+// forStmt        → "for" "(" (varStmt | exprStmt | ";") expression? ";" expression? ")" statement ;
+// ifStmt         → "if" "(" expression ")" statement ("else" statement)? ;
 // printStmt      → "print" expression ";" ;
 // returnStmt     → "return" expression? ";" ;
 // varStmt        → "var" IDENTIFIER ( "=" expression )? ";" ;
-// whileStmt      → "while" "(" expression ")" statement ";" ;
+// whileStmt      → "while" "(" expression ")" statement ;
 
 // expression     → assignment ;
 // assignment     → ( call "." ) ? IDENTIFIER "=" assignment | equality ;
@@ -375,13 +375,7 @@ std::unique_ptr<stmt::Stmt> forStatement(TokenStream &tokStream) {
 
   // Read body
   std::get<stmt::For>(*forStmt).body = statement(tokStream);
-
-  if (TokenType::SEMICOLON == tokStream.peek().type) {
-    tokStream.next();
-    return forStmt;
-  }
-  throw ParseException("No ending semi colon found for 'for' stmt!",
-                       tokStream.peek().line);
+  return forStmt;
 }
 
 std::unique_ptr<stmt::Stmt> funStatement(TokenStream &tokStream) {
@@ -471,12 +465,7 @@ std::unique_ptr<stmt::Stmt> ifStatement(TokenStream &tokStream) {
     std::get<stmt::If>(*ifStmt).elseBranch = statement(tokStream);
   }
 
-  if (TokenType::SEMICOLON == tokStream.peek().type) {
-    tokStream.next();
-    return ifStmt;
-  }
-  throw ParseException("No ending semi colon found for if stmt!",
-                       tokStream.peek().line);
+  return ifStmt;
 }
 
 std::unique_ptr<stmt::Stmt> printStatement(TokenStream &tokStream) {
@@ -559,13 +548,7 @@ std::unique_ptr<stmt::Stmt> whileStatement(TokenStream &tokStream) {
 
   // Read body
   std::get<stmt::While>(*whileStmt).body = statement(tokStream);
-
-  if (TokenType::SEMICOLON == tokStream.peek().type) {
-    tokStream.next();
-    return whileStmt;
-  }
-  throw ParseException("No ending semi colon found for while stmt!",
-                       tokStream.peek().line);
+  return whileStmt;
 }
 
 std::unique_ptr<stmt::Stmt> statement(TokenStream &tokStream) {

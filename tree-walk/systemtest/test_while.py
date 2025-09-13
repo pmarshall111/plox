@@ -4,7 +4,6 @@ def test_while(lox_runner):
     var a = 15;
     while (a < 42)
         a = a * 2;
-    ;
     print(a);
     """
 
