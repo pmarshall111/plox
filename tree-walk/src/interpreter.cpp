@@ -301,9 +301,8 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
     throw InterpretException("Internal error! Class factory pointer is null!");
   }
 
-  // Create class instance for every class in the heirarchy. This allows each
-  // level of the heirarchy to have its own environment so methods can be
-  // shadowed.
+  // Create class instance for every class in the heirarchy. This gives each
+  // level of the heirarchy its own environment so methods can be shadowed.
   auto currDef = clsDefSPtr;
   std::shared_ptr<ClassInstance> currClass;
   std::shared_ptr<ClassInstance> childOfCurrent;
