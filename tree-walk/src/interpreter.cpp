@@ -275,7 +275,6 @@ Value InterpreterVisitor::invoke(const FnDescShrdPtr &fnDescSPtr,
 
   // Special behaviour for initialisers - always return "this"
   if (fnDescSPtr->isInitialiser()) {
-    Value _this = fnDescSPtr->getClosure()->get("this");
     try {
       fnSPtr->execute(d_env, *this);
     } catch (ReturnEx &ex) {
@@ -284,7 +283,7 @@ Value InterpreterVisitor::invoke(const FnDescShrdPtr &fnDescSPtr,
             "No explicit return allowed from a class initialiser");
       }
     }
-    return _this;
+    return fnDescSPtr->getClosure()->get("this");
   }
 
   try {
