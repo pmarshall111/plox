@@ -301,9 +301,9 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
     throw InterpretException("Internal error! Class factory pointer is null!");
   }
 
-  // Create class instance for every class in the heirarchy. This allows for
-  // each level of the heirarchy to have its own environment containing the
-  // methods for the level.
+  // Create class instance for every class in the heirarchy. This allows each
+  // level of the heirarchy to have its own environment so methods can be
+  // shadowed.
   auto currDef = clsDefSPtr;
   std::shared_ptr<ClassInstance> currClass;
   std::shared_ptr<ClassInstance> childOfCurrent;
@@ -321,13 +321,14 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
       currEnv->assign(k, fnDefCopy);
     }
 
-    // Create ClassInstance object for the current class in the inheritance
-    // tree.
+    // Create ClassInstance for the current class in the heirarchy.
     currClass = std::make_shared<ClassInstance>(currDef->getName(), currEnv);
     if (!leafClass) {
       leafClass = currClass;
     }
-    // Link the heirarchy together through 'this' and 'super'
+    // Link the heirarchy together through 'this' and 'super'. Note, 'this'
+    // should always apply to the leaf class so that function calls in all
+    // levels access/update the same variables.
     currEnv->define("this", leafClass);
     if (childOfCurrent) {
       childOfCurrent->getClosure()->define("super", currClass);
