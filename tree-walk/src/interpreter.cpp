@@ -33,6 +33,7 @@ static ValuePrinter s_valuePrinter;
 struct AdditionVisitor {
   Value operator()(double l, double r);
   Value operator()(std::string &l, std::string &r);
+  Value operator()(std::string &l, double r);
   Value operator()(auto &&l, auto &&r);
 } s_adder;
 
@@ -458,6 +459,10 @@ Value AdditionVisitor::operator()(double l, double r) { return l + r; }
 
 Value AdditionVisitor::operator()(std::string &l, std::string &r) {
   return l + r;
+}
+
+Value AdditionVisitor::operator()(std::string &l, double r) {
+  return l + std::to_string(r);
 }
 
 Value AdditionVisitor::operator()(auto &&l, auto &&r) {
