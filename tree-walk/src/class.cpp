@@ -4,13 +4,18 @@ namespace plox {
 namespace treewalk {
 
 ClassDefinition::ClassDefinition(std::string_view name,
-                                 std::shared_ptr<Environment> closure)
-    : d_name(name), d_closure(closure){};
+                                 std::shared_ptr<Environment> closure,
+                                 std::shared_ptr<ClassDefinition> super)
+    : d_name(name), d_closure(closure), d_super(super){};
 
 std::string_view ClassDefinition::getName() const { return d_name; }
 
 std::shared_ptr<Environment> &ClassDefinition::getClosure() {
   return d_closure;
+};
+
+std::shared_ptr<ClassDefinition> ClassDefinition::getSuper() {
+  return d_super;
 };
 
 std::ostream &operator<<(std::ostream &os, const ClassDefinition &cls) {
