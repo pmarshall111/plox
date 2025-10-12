@@ -120,6 +120,33 @@ def test_fun_closure(lox_runner):
     assert stderr == ""
 
 
+def test_fun_closure_recursion(lox_runner):
+    # GIVEN
+    code = """
+    fun nTimesX(x) {
+        var count = 0;
+        fun closure(n) {
+            if (n == 0) {
+                return count;
+            }
+            count = count + x;
+            n = n - 1;
+            return closure(n);
+        }
+        return closure;
+    }
+    var a = nTimesX(3)(5);
+    print a;
+    """
+
+    # WHEN
+    stdout, stderr = lox_runner(code)
+
+    # THEN
+    assert stdout.strip().splitlines() == ["15"]
+    assert stderr == ""
+
+
 def test_function_as_arg(lox_runner):
     # GIVEN
     code = """

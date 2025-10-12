@@ -32,17 +32,25 @@ Value Function::execute(std::shared_ptr<Environment> env,
 }
 
 FunctionDescription::FunctionDescription(std::string_view name,
-                                         std::shared_ptr<Environment> closure,
+                                         std::weak_ptr<Environment> closure,
                                          std::shared_ptr<const Function> fn)
-    : d_name(name), d_closure(closure), d_fn(fn), d_isInitialiser(false) {}
+    : d_name(name),
+      d_closure(std::make_shared<OwnershipHelper<Environment>>(closure)),
+      d_fn(fn), d_isInitialiser(false) {}
 
 std::string_view FunctionDescription::getName() const { return d_name; }
 
 void FunctionDescription::setName(std::string_view name) { d_name = name; }
 
-std::shared_ptr<Environment> &FunctionDescription::getClosure() {
-  return d_closure;
+std::shared_ptr<Environment> FunctionDescription::getClosure() {
+  return d_closure->getStrong();
 }
+
+void FunctionDescription::setClosure(std::weak_ptr<Environment> closure) {
+  d_closure->hold(closure);
+}
+
+void FunctionDescription::ownClosure() { d_closure->becomeOwner(); }
 
 const std::shared_ptr<const Function> &
 FunctionDescription::getFunction() const {

@@ -4,6 +4,7 @@
 #include <environment.h>
 #include <func_native.h>
 #include <interpreter.h>
+#include <ownershiphelper.h>
 #include <stmt.h>
 #include <value.h>
 
@@ -32,20 +33,38 @@ private:
 
 class FunctionDescription {
 public:
-  FunctionDescription(std::string_view name,
-                      std::shared_ptr<Environment> closure,
+  FunctionDescription(std::string_view name, std::weak_ptr<Environment> closure,
                       std::shared_ptr<const Function> fn);
 
   std::string_view getName() const;
   void setName(std::string_view name);
-  std::shared_ptr<Environment> &getClosure();
+  std::shared_ptr<Environment> getClosure();
+  void setClosure(std::weak_ptr<Environment> closure);
   const std::shared_ptr<const Function> &getFunction() const;
   bool isInitialiser() const;
   void setIsInitialiser(bool b);
+  void ownClosure();
 
 private:
   std::string_view d_name;
-  std::shared_ptr<Environment> d_closure;
+  // d_closure will ordinarily be a weak_ptr to avoid memory leaks through
+  // circular references. Note in the ordinary case the scope owns the function
+  // through a strong ptr.
+  //
+  // parentEnv <-strong- fnEnv <-weak- Fn
+  //     |                              ^
+  //     |                              |
+  //     +------------strong------------+
+  //
+  // When a function is returned from a scope, it must now own the environment
+  // to keep it alive. In this case d_closure will be a shared_ptr.
+  //
+  // parentEnv <-strong- fnEnv <-strong- Fn
+  //     |                                ^
+  //     |                                |
+  //     +------------weak----------------+
+  //
+  std::shared_ptr<OwnershipHelper<Environment>> d_closure;
   std::shared_ptr<const Function> d_fn;
   bool d_isInitialiser;
 };

@@ -10,68 +10,60 @@ namespace test {
 TEST(Environment, DefineAndGet) {
   // GIVEN
   auto envPtr = Environment::create();
-  Value initial = 42.0;
 
   // WHEN
-  envPtr->define("x", initial);
+  envPtr->define("x", 42.0);
 
   // THEN
-  EXPECT_EQ(envPtr->get("x"), initial);
+  EXPECT_EQ(envPtr->get("x"), Value{42.0});
 }
 
 TEST(Environment, AssignAndGet) {
   // GIVEN
   auto envPtr = Environment::create();
-  Value initial = 42.0;
-  Value updated = "hi";
 
   // WHEN
-  envPtr->define("x", initial);
-  envPtr->assign("x", updated);
+  envPtr->define("x", 42.0);
+  envPtr->assign("x", "hi");
 
   // THEN
-  EXPECT_EQ(envPtr->get("x"), updated);
+  EXPECT_EQ(envPtr->get("x"), Value{"hi"});
 }
 
 TEST(Environment, UpsertAndGet) {
   // GIVEN
   auto envPtr = Environment::create();
-  Value initial = 42.0;
-  Value updated = "hi";
 
   // WHEN
-  envPtr->upsertInScope("x", initial);
-  envPtr->upsertInScope("x", updated);
+  envPtr->upsertInScope("x", 42.0);
+  envPtr->upsertInScope("x", "hi");
 
   // THEN
-  EXPECT_EQ(envPtr->get("x"), updated);
+  EXPECT_EQ(envPtr->get("x"), Value{"hi"});
 }
 
 TEST(Environment, GetFromParentEnv) {
   // GIVEN
   auto parentPtr = Environment::create();
-  Value v = 99.0;
-  parentPtr->define("x", v);
+  parentPtr->define("x", 99.0);
   auto childPtr = Environment::create(parentPtr);
 
   // THEN
-  EXPECT_EQ(childPtr->get("x"), v);
+  EXPECT_EQ(childPtr->get("x"), Value{99.0});
 }
 
 TEST(Environment, AssignInParentEnv) {
   // GIVEN
   auto parentPtr = Environment::create();
-  Value initial = 50.0;
-  Value updated = true;
-  parentPtr->define("x", initial);
+  parentPtr->define("x", 50.0);
   auto childPtr = Environment::create(parentPtr);
 
   // WHEN
-  childPtr->assign("x", updated);
+  childPtr->assign("x", true);
 
   // THEN
-  EXPECT_EQ(childPtr->get("x"), updated);
-  EXPECT_EQ(parentPtr->get("x"), updated);
+  EXPECT_EQ(childPtr->get("x"), Value{true});
+  EXPECT_EQ(parentPtr->get("x"), Value{true});
 }
 
 TEST(Environment, GetUndefinedThrows) {

@@ -1,6 +1,7 @@
 #include <environment.h>
 
 #include <errs.h>
+#include <func.h>
 
 namespace plox {
 namespace treewalk {
@@ -23,18 +24,18 @@ Environment::extend(std::shared_ptr<Environment> scope) {
 Environment::Environment(std::shared_ptr<Environment> parent)
     : d_parent(parent), d_isScopeStart(true), d_isScopeEnd(true) {}
 
-void Environment::assign(const std::string &name, const Value &v) {
+void Environment::assign(const std::string &name, Value &&v) {
   // Assignment dictates the var must already exist
   if (d_map.contains(name)) {
-    d_map[name] = v;
+    d_map[name] = std::move(v);
   } else if (d_parent) {
-    d_parent->assign(name, v);
+    d_parent->assign(name, std::move(v));
   } else {
     throw InterpretException("Cannot assign unknown variable: " + name);
   }
 }
 
-void Environment::define(const std::string &name, const Value &v) {
+void Environment::define(const std::string &name, Value &&v) {
   if (!d_isScopeEnd) {
     throw InterpretException(
         "Internal Lox error: Tried to define a variable '" + name +
@@ -47,18 +48,18 @@ void Environment::define(const std::string &name, const Value &v) {
     throw InterpretException("Cannot redefine variable: " + name);
   }
 
-  d_map[name] = v;
+  d_map[name] = std::move(v);
 }
 
-void Environment::upsertInScope(const std::string &name, const Value &v) {
+void Environment::upsertInScope(const std::string &name, Value &&v) {
   if (isVarInScope(name)) {
-    return assign(name, v);
+    return assign(name, std::move(v));
   }
 
-  return define(name, v);
+  return define(name, std::move(v));
 }
 
-Value Environment::get(const std::string &name) const {
+Value &Environment::get(const std::string &name) {
   if (d_map.contains(name)) {
     return d_map.at(name);
   } else if (d_parent) {
@@ -98,6 +99,15 @@ ScopedSwap::ScopedSwap(std::shared_ptr<Environment> &a,
   std::swap(d_a, d_b);
 }
 ScopedSwap::~ScopedSwap() { std::swap(d_a, d_b); }
+
+// void invertOwnership(const std::string& fnName, FnDescShrdPtr fn) {
+//   std::shared_ptr<Environment> envShared = fn->getClosure();
+
+//   fn->setClosure(envShared);
+//   auto a = FnDescWkPtr(fn);
+//   envShared->assign(fnName, {FnDescWkPtr(fn)});
+// }
+
 } // namespace environmentutils
 
 } // namespace treewalk
