@@ -84,6 +84,22 @@ TEST(Scanner, Print) {
   ASSERT_EQ(0, errors.size());
 }
 
+TEST(Scanner, Comments) {
+  // Given
+  std::vector<SyntaxException> errors;
+  std::string code = "print 1; //ayy";
+  std::vector<Token> expected{
+      Token{TokenType::PRINT, "print", 1}, Token{TokenType::NUMBER, "1", 1},
+      Token{TokenType::SEMICOLON, ";", 1}, Token{TokenType::EOF_, "", 2}};
+
+  // When
+  auto vec = scanTokens(code, errors);
+
+  // Then
+  ASSERT_EQ(expected, vec);
+  ASSERT_EQ(0, errors.size());
+}
+
 } // namespace test
 } // namespace treewalk
 } // namespace plox

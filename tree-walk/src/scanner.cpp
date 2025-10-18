@@ -168,7 +168,7 @@ std::vector<Token> scanTokens(const std::string_view code,
     } else if (c == '/') {
       if (nextCharEquals(code, pos, '/')) {
         // comment - skip till next line
-        while (code.at(pos) != '\n') {
+        while (pos < code.size() && code.at(pos) != '\n') {
           pos++;
         }
         line++;
