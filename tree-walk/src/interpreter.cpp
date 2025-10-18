@@ -343,7 +343,7 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
           *std::get<FnDescOwnrHlpr>(v)->getStrong());
       // Bind the current environment to the function so the member function can
       // be stored in a variable outside the class.
-      fnDescCpy->getClosure() = currEnv;
+      fnDescCpy->setClosure(currEnv);
       currEnv->assign(
           k, std::make_shared<OwnershipHelper<FunctionDescription>>(fnDescCpy));
     }
