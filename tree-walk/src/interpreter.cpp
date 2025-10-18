@@ -340,12 +340,12 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
         std::shared_ptr<Environment>(new Environment(*currDef->getClosure()));
     for (const auto &[k, v] : *currEnv) {
       auto fnDescCpy = std::make_shared<FunctionDescription>(
-        *std::get<FnDescOwnrHlpr>(v)->getStrong());
+          *std::get<FnDescOwnrHlpr>(v)->getStrong());
       // Bind the current environment to the function so the member function can
       // be stored in a variable outside the class.
       fnDescCpy->getClosure() = currEnv;
       currEnv->assign(
-        k, std::make_shared<OwnershipHelper<FunctionDescription>>(fnDescCpy));
+          k, std::make_shared<OwnershipHelper<FunctionDescription>>(fnDescCpy));
     }
 
     // Create ClassInstance for the current class in the heirarchy.
@@ -367,7 +367,8 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
   } while (currDef);
 
   if (leafClass->getClosure()->isVarInScope("init")) {
-    invoke(std::get<FnDescOwnrHlpr>(leafClass->getClosure()->get("init")), call);
+    invoke(std::get<FnDescOwnrHlpr>(leafClass->getClosure()->get("init")),
+           call);
   }
 
   return leafClass;
