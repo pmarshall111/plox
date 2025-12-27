@@ -5,7 +5,6 @@ def test_if(lox_runner):
         print(15);
     else 
         print(0);
-    ;
     """
 
     # WHEN
@@ -23,7 +22,6 @@ def test_else(lox_runner):
         print(15);
     else 
         print(0);
-    ;
     """
 
     # WHEN

@@ -40,7 +40,7 @@ TEST(Interpreter, smoke) {
   interpret(statements, env, errs);
 
   // Then
-  auto val = env->get("myVar");
+  auto &val = env->get("myVar");
   ASSERT_EQ(56.0, std::get<double>(val));
   ASSERT_EQ(0, errs.size());
 }
@@ -90,7 +90,7 @@ TEST(Interpreter, UseVar) {
   interpret(statements, env, errs);
 
   // Then
-  auto b = env->get("b");
+  auto &b = env->get("b");
   ASSERT_EQ(6, std::get<double>(b));
   ASSERT_EQ(0, errs.size());
 }
@@ -118,7 +118,7 @@ TEST(Interpreter, ReassignVar) {
   interpret(statements, env, errs);
 
   // Then
-  auto a = env->get("a");
+  auto &a = env->get("a");
   ASSERT_EQ(6, std::get<double>(a));
   ASSERT_EQ(0, errs.size());
 }

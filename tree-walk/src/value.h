@@ -14,10 +14,11 @@ using ClsInstShrdPtr = std::shared_ptr<ClassInstance>;
 struct ClassDefinition;
 using ClsDefShrdPtr = std::shared_ptr<ClassDefinition>;
 struct FunctionDescription;
-using FnDescShrdPtr = std::shared_ptr<FunctionDescription>;
+template <typename T> struct OwnershipHelper;
+using FnDescOwnrHlpr = std::shared_ptr<OwnershipHelper<FunctionDescription>>;
 
 using Value = std::variant<std::monostate, std::string, bool, double,
-                           FnDescShrdPtr, ClsDefShrdPtr, ClsInstShrdPtr>;
+                           FnDescOwnrHlpr, ClsDefShrdPtr, ClsInstShrdPtr>;
 
 } // namespace treewalk
 } // namespace plox

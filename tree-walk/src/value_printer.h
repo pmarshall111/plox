@@ -14,13 +14,6 @@
 namespace plox {
 namespace treewalk {
 
-using ClsInstShrdPtr = std::shared_ptr<ClassInstance>;
-using ClsDefShrdPtr = std::shared_ptr<ClassDefinition>;
-using FnDescShrdPtr = std::shared_ptr<FunctionDescription>;
-
-using Value = std::variant<std::monostate, std::string, bool, double,
-                           FnDescShrdPtr, ClsDefShrdPtr, ClsInstShrdPtr>;
-
 // Concepts to control which template method should be chosen
 template <typename T>
 concept SharedPtr =

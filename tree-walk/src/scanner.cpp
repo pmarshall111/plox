@@ -129,8 +129,6 @@ std::vector<Token> scanTokens(const std::string_view code,
       tokens.emplace_back(TokenType::PLUS, std::string_view(&c, 1), line);
     } else if (c == ';') {
       tokens.emplace_back(TokenType::SEMICOLON, std::string_view(&c, 1), line);
-    } else if (c == '/') {
-      tokens.emplace_back(TokenType::SLASH, std::string_view(&c, 1), line);
     } else if (c == '*') {
       tokens.emplace_back(TokenType::STAR, std::string_view(&c, 1), line);
     }
@@ -166,6 +164,16 @@ std::vector<Token> scanTokens(const std::string_view code,
         pos++; // 2 char token
       } else {
         tokens.emplace_back(TokenType::GREATER, std::string_view(&c, 1), line);
+      }
+    } else if (c == '/') {
+      if (nextCharEquals(code, pos, '/')) {
+        // comment - skip till next line
+        while (pos < code.size() && code.at(pos) != '\n') {
+          pos++;
+        }
+        line++;
+      } else {
+        tokens.emplace_back(TokenType::SLASH, std::string_view(&c, 1), line);
       }
     }
     // literals

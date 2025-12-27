@@ -33,6 +33,7 @@ static ValuePrinter s_valuePrinter;
 struct AdditionVisitor {
   Value operator()(double l, double r);
   Value operator()(std::string &l, std::string &r);
+  Value operator()(std::string &l, double r);
   Value operator()(auto &&l, auto &&r);
 } s_adder;
 
@@ -62,6 +63,16 @@ struct ReturnEx : public std::runtime_error {
   ReturnEx(Value v) : d_val(v), std::runtime_error("return"){};
   Value d_val;
 };
+
+template <typename T>
+std::shared_ptr<T> upgradeWeakToShared(std::weak_ptr<T> weak) {
+  auto shrd = weak.lock();
+  if (shrd) {
+    return shrd;
+  }
+  throw InterpretException(
+      "Internal lox error upgrading weak ptr to shared ptr!");
+}
 } // namespace
 
 InterpreterVisitor::InterpreterVisitor(std::shared_ptr<Environment> &env)
@@ -141,7 +152,8 @@ void InterpreterVisitor::operator()(Fun &funStmt) {
       funStmt.name, d_env,
       std::make_shared<Function>(std::move(funStmt.params),
                                  std::move(funStmt.stmts)));
-  d_env->define(std::string(funStmt.name), f);
+  d_env->define(std::string(funStmt.name),
+                std::make_shared<OwnershipHelper<FunctionDescription>>(f));
 
   if (!funStmt.isMethod) {
     // Extend scope so this function can have an Environment with only the
@@ -190,7 +202,7 @@ void InterpreterVisitor::operator()(const VarDecl &varDecl) {
   if (varDecl.expr) {
     val = std::visit(*this, *varDecl.expr);
   }
-  d_env->define(name, val);
+  d_env->define(name, std::move(val));
 }
 
 void InterpreterVisitor::operator()(const While &whileStmt) {
@@ -202,8 +214,8 @@ void InterpreterVisitor::operator()(const While &whileStmt) {
 Value InterpreterVisitor::operator()(const Assign &assign) {
   auto name = std::string(assign.name);
   Value val = std::visit(*this, *assign.value);
-  d_env->assign(name, val);
-  return val;
+  d_env->assign(name, std::move(val));
+  return {};
 }
 
 Value InterpreterVisitor::operator()(const Binary &bnry) {
@@ -237,8 +249,9 @@ Value InterpreterVisitor::operator()(const Binary &bnry) {
   }
 }
 
-Value InterpreterVisitor::invoke(const FnDescShrdPtr &fnDescSPtr,
+Value InterpreterVisitor::invoke(const FnDescOwnrHlpr &fnDescOwnrHlpr,
                                  const Call &call) {
+  auto fnDescSPtr = fnDescOwnrHlpr->getStrong();
   if (!fnDescSPtr) {
     throw InterpretException(
         "Internal error! Function closure pointer is null!");
@@ -265,7 +278,7 @@ Value InterpreterVisitor::invoke(const FnDescShrdPtr &fnDescSPtr,
   const std::vector<std::string_view> &fArgNames = fnSPtr->getArgNames();
   for (int i = 0; i < call.args.size(); i++) {
     Value v = std::visit(*this, *call.args[i]);
-    fEnv->define(std::string(fArgNames[i]), v);
+    fEnv->define(std::string(fArgNames[i]), std::move(v));
   }
 
   // Update environment to be the environment of the function, and swap back on
@@ -274,7 +287,6 @@ Value InterpreterVisitor::invoke(const FnDescShrdPtr &fnDescSPtr,
 
   // Special behaviour for initialisers - always return "this"
   if (fnDescSPtr->isInitialiser()) {
-    Value _this = fnDescSPtr->getClosure()->get("this");
     try {
       fnSPtr->execute(d_env, *this);
     } catch (ReturnEx &ex) {
@@ -283,7 +295,7 @@ Value InterpreterVisitor::invoke(const FnDescShrdPtr &fnDescSPtr,
             "No explicit return allowed from a class initialiser");
       }
     }
-    return _this;
+    return fnDescSPtr->getClosure()->get("this");
   }
 
   try {
@@ -291,6 +303,21 @@ Value InterpreterVisitor::invoke(const FnDescShrdPtr &fnDescSPtr,
     // will throw and be caught below
     return fnSPtr->execute(d_env, *this);
   } catch (ReturnEx &ex) {
+    // If we return a function from the closure we need to invert the ownership
+    // since now the environment must live as long as the function rather than
+    // the function living as long as the environment
+    if (std::holds_alternative<FnDescOwnrHlpr>(ex.d_val)) {
+      auto ownerHelper = std::get<FnDescOwnrHlpr>(ex.d_val);
+      auto fn = ownerHelper->getStrong();
+      // Tell function to own the closure
+      fn->ownClosure();
+      // Tell Environment to become a borrower
+      Value &fnInEnv = fn->getClosure()->get(std::string(fn->getName()));
+      std::get<FnDescOwnrHlpr>(fnInEnv)->becomeBorrower();
+
+      // Return copy of Owner around function with a strong ref to keep it alive
+      ex.d_val = std::make_shared<OwnershipHelper<FunctionDescription>>(fn);
+    }
     return ex.d_val;
   }
 }
@@ -312,12 +339,13 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
     auto currEnv =
         std::shared_ptr<Environment>(new Environment(*currDef->getClosure()));
     for (const auto &[k, v] : *currEnv) {
-      auto fnDefCopy =
-          std::make_shared<FunctionDescription>(*std::get<FnDescShrdPtr>(v));
+      auto fnDescCpy = std::make_shared<FunctionDescription>(
+          *std::get<FnDescOwnrHlpr>(v)->getStrong());
       // Bind the current environment to the function so the member function can
       // be stored in a variable outside the class.
-      fnDefCopy->getClosure() = currEnv;
-      currEnv->assign(k, fnDefCopy);
+      fnDescCpy->setClosure(currEnv);
+      currEnv->assign(
+          k, std::make_shared<OwnershipHelper<FunctionDescription>>(fnDescCpy));
     }
 
     // Create ClassInstance for the current class in the heirarchy.
@@ -339,7 +367,8 @@ Value InterpreterVisitor::invoke(const ClsDefShrdPtr &clsDefSPtr,
   } while (currDef);
 
   if (leafClass->getClosure()->isVarInScope("init")) {
-    invoke(std::get<FnDescShrdPtr>(leafClass->getClosure()->get("init")), call);
+    invoke(std::get<FnDescOwnrHlpr>(leafClass->getClosure()->get("init")),
+           call);
   }
 
   return leafClass;
@@ -350,8 +379,8 @@ Value InterpreterVisitor::operator()(const Call &call) {
   // in chains we may need to evaluate a preceeding function i.e. fn(1)(2);
   Value callee = std::visit(*this, *call.callee);
 
-  if (std::holds_alternative<FnDescShrdPtr>(callee)) {
-    return invoke(std::get<FnDescShrdPtr>(callee), call);
+  if (std::holds_alternative<FnDescOwnrHlpr>(callee)) {
+    return invoke(std::get<FnDescOwnrHlpr>(callee), call);
   } else if (std::holds_alternative<ClsDefShrdPtr>(callee)) {
     return invoke(std::get<ClsDefShrdPtr>(callee), call);
   } else {
@@ -423,15 +452,15 @@ Value InterpreterVisitor::operator()(const Set &set) {
   }
 
   Value val = std::visit(*this, *set.value);
-  if (std::holds_alternative<FnDescShrdPtr>(val)) {
-    FnDescShrdPtr fnCopy =
-        std::make_shared<FunctionDescription>(*std::get<FnDescShrdPtr>(val));
+  if (std::holds_alternative<FnDescOwnrHlpr>(val)) {
+    auto fnCopy = std::make_shared<FunctionDescription>(
+        *std::get<FnDescOwnrHlpr>(val)->getStrong());
     fnCopy->setName(set.property);
     fnCopy->setIsInitialiser(set.property == "init");
-    val = fnCopy;
+    val = std::make_shared<OwnershipHelper<FunctionDescription>>(fnCopy);
   }
   std::get<ClsInstShrdPtr>(obj)->getClosure()->upsertInScope(
-      std::string(set.property), val);
+      std::string(set.property), std::move(val));
   return {};
 }
 
@@ -458,6 +487,10 @@ Value AdditionVisitor::operator()(double l, double r) { return l + r; }
 
 Value AdditionVisitor::operator()(std::string &l, std::string &r) {
   return l + r;
+}
+
+Value AdditionVisitor::operator()(std::string &l, double r) {
+  return l + std::to_string(r);
 }
 
 Value AdditionVisitor::operator()(auto &&l, auto &&r) {

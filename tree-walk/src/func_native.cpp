@@ -23,7 +23,8 @@ void addClock(std::shared_ptr<Environment> env) {
   auto clockFn = std::make_shared<FunctionDescription>(
       s_name, env,
       std::make_shared<Function>(std::vector<std::string_view>{}, clock));
-  env->define(s_name, clockFn);
+  env->define(s_name,
+              std::make_shared<OwnershipHelper<FunctionDescription>>(clockFn));
 }
 
 void addVersion(std::shared_ptr<Environment> env) {
@@ -35,7 +36,8 @@ void addVersion(std::shared_ptr<Environment> env) {
   auto versionFn = std::make_shared<FunctionDescription>(
       s_name, env,
       std::make_shared<Function>(std::vector<std::string_view>{}, version));
-  env->define(s_name, versionFn);
+  env->define(s_name, std::make_shared<OwnershipHelper<FunctionDescription>>(
+                          versionFn));
 }
 
 } // namespace nativefunc

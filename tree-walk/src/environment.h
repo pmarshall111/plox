@@ -31,11 +31,11 @@ public:
   extend(std::shared_ptr<Environment> scope);
 
   // Operations
-  void assign(const std::string &name, const Value &v);
-  void define(const std::string &name, const Value &v = {});
-  void upsertInScope(const std::string &name, const Value &v);
+  void assign(const std::string &name, Value &&v);
+  void define(const std::string &name, Value &&v = {});
+  void upsertInScope(const std::string &name, Value &&v);
 
-  Value get(const std::string &name) const;
+  Value &get(const std::string &name);
 
   bool isVarInScope(const std::string &name) const;
 
@@ -64,6 +64,14 @@ private:
   std::shared_ptr<Environment> &d_a;
   std::shared_ptr<Environment> &d_b;
 };
+
+// Utility to invert ownership from an environment to a function. Ordinarily
+// an environment will own a function and the function dies when the environment
+// goes out of scope. However, if a function is returned to a parent scope the
+// environment that the function depends on must live as long as the function
+// lives.
+// void invertOwnership(FnDescShrdPtr fn);
+
 } // namespace environmentutils
 
 } // namespace treewalk
